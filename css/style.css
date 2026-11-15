@@ -1,17 +1,20 @@
 /* ============ Dasar ============ */
 :root {
-  --bg: #0a0e24;
-  --panel: #121833;
-  --panel-2: #1a2145;
-  --line: #2b3566;
-  --text: #e8ecff;
-  --muted: #9aa4d6;
-  --blue: #3b82f6;
-  --blue-dark: #0b1b4d;
-  --cyan: #22d3ee;
-  --green: #4ade80;
-  --red: #f87171;
-  --pixel: 'Press Start 2P', ui-monospace, monospace;
+  --night: #1d1a2e;
+  --night-2: #15131f;
+  --plank: #3b2a22;
+  --plank-line: #6b4a36;
+  --paper: #f3e6c9;
+  --muted: #a9a3c4;
+  --coin: #f5c22e;
+  --coin-dark: #a87a0b;
+  --brick-dark: #6e2f10;
+  --hp: #d93a3a;
+  --ok: #6fdc7a;
+  --bad: #ff7b7b;
+  --display: 'Pixelify Sans', ui-monospace, monospace;
+  --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
 }
 
 * { box-sizing: border-box; }
@@ -21,76 +24,103 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(ellipse at top, #141b45 0%, var(--bg) 60%);
-  color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--night);
+  color: var(--paper);
+  font-family: var(--body);
+  font-size: 17px;
   line-height: 1.6;
 }
 
-/* ============ HUD ============ */
-.hud {
+:focus-visible {
+  outline: 3px solid var(--coin);
+  outline-offset: 3px;
+}
+
+/* ============ Header ============ */
+.topbar {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  max-width: 1100px;
+  gap: 16px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 18px 20px 14px;
 }
 
 .brand {
-  font-family: var(--pixel);
-  font-size: 13px;
-  background: linear-gradient(90deg, var(--cyan), var(--blue));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: 0.5px;
+  color: var(--coin);
 }
 
-.hud-info { display: flex; gap: 8px; }
-
-.chip {
-  font-family: var(--pixel);
-  font-size: 9px;
-  padding: 8px 10px;
-  background: var(--panel-2);
-  border: 2px solid var(--line);
-  border-radius: 6px;
+.progress {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+  font-family: var(--display);
+  font-size: 17px;
+  color: var(--muted);
 }
+
+.progress #hudTier { color: var(--paper); }
 
 /* ============ Arena ============ */
-.game { max-width: 1100px; margin: 0 auto; padding: 0 16px 32px; }
+.game { max-width: 1120px; margin: 0 auto; padding: 0 20px 40px; }
+
+/* Bingkai bata kiri, kanan, atas. Bawahnya tanah bata di dalam scene. */
+.frame {
+  padding: 18px 18px 0;
+  background: url('../assets/ui/brick.svg') 0 0 / 32px 32px;
+  image-rendering: pixelated;
+  box-shadow: 0 0 0 4px #2a1208;
+}
 
 .stage {
   position: relative;
-  height: clamp(220px, 38vh, 360px);
+  height: clamp(240px, 42vh, 400px);
   overflow: hidden;
-  border: 4px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.35);
+  background:
+    url('../assets/backgrounds/basic.png') center bottom / cover no-repeat,
+    url('../assets/backgrounds/basic.svg') center bottom / cover no-repeat,
+    #8dd0f0;
   image-rendering: pixelated;
+  box-shadow: 0 0 0 4px #2a1208;
 }
 
-/* Kalau file background belum ada, gradient di bawahnya yang kelihatan. */
-.tier-basic {
-  background:
-    url('../assets/backgrounds/basic.png') center / cover no-repeat,
-    linear-gradient(#6ec6ff 0%, #bfe8ff 64%, #5cbf60 64%, #3f9a45 100%);
-}
 .tier-medium {
   background:
-    url('../assets/backgrounds/medium.png') center / cover no-repeat,
-    linear-gradient(#2b1f4d 0%, #6b3f7a 64%, #2f4a35 64%, #1f3326 100%);
+    url('../assets/backgrounds/medium.png') center bottom / cover no-repeat,
+    url('../assets/backgrounds/medium.svg') center bottom / cover no-repeat,
+    #2e2255;
 }
+
 .tier-expert {
   background:
-    url('../assets/backgrounds/expert.png') center / cover no-repeat,
-    linear-gradient(#2a0a0a 0%, #7a1f10 64%, #3a0f08 64%, #1d0704 100%);
+    url('../assets/backgrounds/expert.png') center bottom / cover no-repeat,
+    url('../assets/backgrounds/expert.svg') center bottom / cover no-repeat,
+    #4d1208;
+}
+
+/* Tanah bata di dasar scene. */
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 14%;
+  min-height: 36px;
+  background: url('../assets/ui/brick.svg') 0 0 / 32px 32px;
+  image-rendering: pixelated;
+  border-top: 4px solid #2a1208;
+  z-index: 1;
 }
 
 .sprite {
   position: absolute;
-  bottom: 12%;
+  bottom: calc(max(14%, 36px) + 4px);
+  z-index: 2;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -105,36 +135,95 @@ body {
 
 .sprite .fallback { font-size: clamp(48px, 9vw, 96px); line-height: 1; }
 
-.hero { left: 8%; width: clamp(70px, 13%, 130px); }
+.hero { left: 8%; width: 12%; }
 
 .boss {
   right: 8%;
-  width: clamp(110px, 24%, 230px);
+  width: 24%;
   animation: bob 2.4s ease-in-out infinite;
 }
 
-.boss-name {
+/* Koin = jumlah boss yang udah kalah. */
+.coins {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  font-family: var(--pixel);
-  font-size: 10px;
-  padding: 8px 10px;
-  background: rgba(10, 14, 36, 0.85);
-  border: 2px solid var(--line);
-  border-radius: 6px;
+  top: 14px;
+  left: 16px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 22px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #2a1208;
+}
+
+.coin {
+  width: 18px;
+  height: 18px;
+  background: var(--coin);
+  border: 3px solid var(--coin-dark);
+  border-radius: 50%;
+  box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.18);
+}
+
+.coins.bump b { display: inline-block; animation: bump 0.5s ease-out; }
+
+@keyframes bump {
+  0% { transform: scale(1); color: #fff; }
+  40% { transform: scale(1.6); color: var(--coin); }
+  100% { transform: scale(1); color: #fff; }
+}
+
+/* Nama boss + bar HP boss. User sendiri ga punya HP. */
+.plate {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 3;
+  width: min(220px, 46%);
+  padding: 8px 12px 10px;
+  background: rgba(29, 26, 46, 0.88);
+  --c: #2a1208;
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c);
+}
+
+.plate-name {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.2;
+  color: var(--paper);
+}
+
+.hp { height: 10px; background: #3a1414; }
+
+.hp i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--hp);
+  transition: width 0.55s steps(8, end);
 }
 
 .projectile {
   position: absolute;
   bottom: 34%;
   left: 22%;
-  z-index: 3;
-  padding: 6px 10px;
-  font-family: var(--pixel);
-  font-size: 11px;
-  color: #04202a;
-  background: var(--cyan);
+  z-index: 4;
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 15px;
+  color: #2b1a05;
+  background: var(--coin);
   border: 3px solid #fff;
   white-space: nowrap;
 }
@@ -177,143 +266,176 @@ body {
   100% { transform: translateY(40px) scale(0.8); opacity: 0; filter: grayscale(1); }
 }
 
-/* ============ Panel ============ */
+/* ============ Soal & editor ============ */
 .panels {
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 16px;
-  margin-top: 20px;
+  grid-template-columns: minmax(260px, 0.9fr) 1.6fr;
+  gap: 28px;
+  margin: 32px 4px 0;
+  align-items: start;
 }
 
-.panel {
-  padding: 18px;
-  background: var(--panel);
-  border: 3px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+/* Papan soal: kayu, beda bahan dari editor. */
+.quest {
+  padding: 20px 20px 22px;
+  background: var(--plank);
+  --c: var(--plank-line);
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c);
 }
 
-.panel:hover { transform: translateY(-2px); border-color: var(--blue); }
-
-.task h2 {
-  margin: 0 0 10px;
-  font-family: var(--pixel);
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--cyan);
+.quest h2 {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--coin);
 }
 
-.task p { margin: 0 0 16px; color: var(--text); }
+.quest p { margin: 0 0 16px; }
 
 .expected span {
   display: block;
   margin-bottom: 6px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--muted);
 }
 
 .expected code {
   display: block;
   padding: 10px 12px;
-  background: #070a1a;
-  border-left: 4px solid var(--cyan);
-  font-family: Consolas, 'Courier New', monospace;
+  background: var(--night-2);
+  border-left: 4px solid var(--coin);
+  font-family: var(--mono);
   font-size: 15px;
   white-space: pre-wrap;
 }
 
 .toggle {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   margin-top: 18px;
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 15px;
   cursor: pointer;
 }
 
-.toggle input { margin-top: 4px; accent-color: var(--blue); }
+.toggle input { width: 18px; height: 18px; accent-color: var(--coin); }
 
-kbd {
-  padding: 1px 6px;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  font-size: 12px;
+.quest .note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--muted);
 }
 
-/* ============ Editor & konsol ============ */
+.note code { font-family: var(--mono); font-size: 13px; color: var(--paper); }
+
+.code {
+  padding: 16px;
+  background: var(--night-2);
+  --c: #3a3560;
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c);
+}
+
 #editor {
-  height: 300px;
+  height: 320px;
   overflow: hidden;
-  border: 2px solid var(--line);
-  border-radius: 6px;
+}
+
+/* Teks panduan di editor. Dipasang lewat decoration Monaco. */
+.ghost-hint {
+  color: #6f6a92;
+  white-space: pre;
+  pointer-events: none;
 }
 
 .actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 14px;
+  margin-top: 16px;
 }
 
-.shortcut { margin-left: auto; font-size: 12px; color: var(--muted); }
+.shortcut { margin-left: auto; font-size: 14px; color: var(--muted); }
 
 .btn {
-  padding: 12px 16px;
-  font-family: var(--pixel);
-  font-size: 11px;
-  color: #fff;
-  background: var(--blue);
-  border: 3px solid var(--blue-dark);
-  border-radius: 6px;
-  box-shadow: 0 5px 0 var(--blue-dark);
+  padding: 10px 18px 12px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  color: #2b1a05;
+  background: var(--coin);
+  border: 0;
+  box-shadow:
+    0 -4px 0 0 var(--coin),
+    0 4px 0 0 var(--coin),
+    -4px 0 0 0 var(--coin),
+    4px 0 0 0 var(--coin),
+    0 8px 0 0 var(--coin-dark),
+    -4px 4px 0 0 var(--coin-dark),
+    4px 4px 0 0 var(--coin-dark);
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
 }
 
-.btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.btn:hover { filter: brightness(1.08); }
 
 .btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 1px 0 var(--blue-dark);
+  transform: translateY(6px);
+  box-shadow:
+    0 -4px 0 0 var(--coin),
+    0 4px 0 0 var(--coin),
+    -4px 0 0 0 var(--coin),
+    4px 0 0 0 var(--coin);
 }
 
-.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; filter: none; }
 
 .btn.ghost {
-  color: var(--muted);
+  color: var(--paper);
   background: transparent;
-  border-color: var(--line);
-  box-shadow: 0 5px 0 #0c1130;
+  box-shadow:
+    0 -4px 0 0 #3a3560,
+    0 4px 0 0 #3a3560,
+    -4px 0 0 0 #3a3560,
+    4px 0 0 0 #3a3560;
 }
+
+.btn.ghost:hover { color: var(--coin); }
+
+.btn.ghost:active { transform: translateY(3px); }
 
 .console {
   min-height: 96px;
-  margin-top: 14px;
+  margin-top: 22px;
   padding: 12px 14px;
-  background: #070a1a;
-  border: 2px solid var(--line);
-  border-radius: 6px;
-  font-family: Consolas, 'Courier New', monospace;
+  background: #0d0b16;
+  border-left: 4px solid #3a3560;
+  font-family: var(--mono);
   font-size: 14px;
   transition: border-color 0.2s ease;
 }
 
 .console pre { margin: 8px 0 0; white-space: pre-wrap; word-break: break-word; font: inherit; }
-.console.ok { border-color: var(--green); }
-.console.ok strong { color: var(--green); }
-.console.error { border-color: var(--red); }
-.console.error strong { color: var(--red); }
+.console.ok { border-left-color: var(--ok); }
+.console.ok strong { color: var(--ok); }
+.console.error { border-left-color: var(--bad); }
+.console.error strong { color: var(--bad); }
 
-/* Skeleton shimmer */
+/* Skeleton shimmer selagi nunggu compiler. */
 .sk {
   height: 12px;
   margin: 10px 0;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #1a2145 25%, #2b3566 37%, #1a2145 63%);
+  background: linear-gradient(90deg, #1d1a2e 25%, #3a3560 37%, #1d1a2e 63%);
   background-size: 400% 100%;
   animation: shimmer 1.2s ease-in-out infinite;
 }
@@ -331,28 +453,32 @@ kbd {
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(3, 5, 16, 0.75);
+  background: rgba(10, 8, 20, 0.8);
 }
 
 .modal-card {
   width: min(420px, 100%);
-  padding: 28px 24px;
+  padding: 28px 24px 30px;
   text-align: center;
-  background: var(--panel);
-  border: 4px solid var(--cyan);
-  border-radius: 10px;
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4);
-  animation: pop 0.3s ease-out;
+  background: var(--plank);
+  --c: var(--coin);
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c);
+  animation: pop 0.3s steps(4, end);
 }
 
 .modal-card h2 {
-  margin: 0 0 12px;
-  font-family: var(--pixel);
-  font-size: 16px;
-  color: var(--cyan);
+  margin: 0 0 10px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 32px;
+  color: var(--coin);
 }
 
-.modal-card p { margin: 0 0 22px; }
+.modal-card p { margin: 0 0 26px; }
 
 @keyframes pop {
   from { transform: scale(0.85); opacity: 0; }
@@ -361,9 +487,13 @@ kbd {
 
 /* ============ Responsif ============ */
 @media (max-width: 860px) {
-  .panels { grid-template-columns: 1fr; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .brand { font-size: 22px; }
+  .frame { padding: 12px 12px 0; }
+  .panels { grid-template-columns: 1fr; gap: 28px; margin: 28px 4px 0; }
   #editor { height: 260px; }
   .shortcut { display: none; }
+  .plate { width: min(180px, 52%); }
 }
 
 @media (prefers-reduced-motion: reduce) {

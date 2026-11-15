@@ -21,12 +21,13 @@ compile-and-conquer/
 ├── js/
 │   ├── levels.js       daftar level (boss, soal, hint)
 │   ├── judge.js        kirim kode ke compiler online
-│   ├── editor.js       editor kode + ghost text
+│   ├── editor.js       editor kode + ghost text (panduan)
 │   └── game.js         logika game & animasi
 └── assets/
+    ├── ui/             tile bata bingkai
     ├── hero/           sprite hero
     ├── bosses/         sprite boss
-    └── backgrounds/    background per tier
+    └── backgrounds/    background per tier (svg bawaan, png menimpa)
 ```
 
 ## Nambah level
@@ -36,7 +37,7 @@ Buka `js/levels.js`, copy salah satu objek di array `LEVELS`, lalu ubah isinya:
 - `boss`: nama, file sprite, dan emoji cadangan
 - `task`: cerita + perintah soal
 - `expected`: output persis yang harus keluar
-- `ghost`: baris hint abu-abu (user tekan Tab buat nerima)
+- `ghost`: baris panduan abu-abu, pakai `ghostFor(...)`. Cuma panduan, user tetap ngetik sendiri dari `#include`
 - `requires`: aturan tambahan biar user ga cuma ngetik hasilnya langsung (opsional)
 
 ## Sprite & background

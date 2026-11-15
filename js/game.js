@@ -12,6 +12,9 @@
   const els = {
     hudTier: $('hudTier'),
     hudLevel: $('hudLevel'),
+    coins: document.querySelector('.coins'),
+    coinCount: $('coinCount'),
+    hpFill: $('hpFill'),
     stage: $('stage'),
     hero: $('hero'),
     boss: $('boss'),
@@ -98,7 +101,9 @@
     const level = LEVELS[levelIndex];
 
     els.hudTier.textContent = TIER_LABEL[level.tier];
-    els.hudLevel.textContent = `Level ${levelIndex + 1} / ${LEVELS.length}`;
+    els.hudLevel.textContent = `Level ${levelIndex + 1} dari ${LEVELS.length}`;
+    els.coinCount.textContent = String(levelIndex);
+    resetHp();
     els.stage.className = `stage tier-${level.tier}`;
 
     setSprite(els.hero, 'assets/hero/hero.png', '🧑‍💻', 'Hero');
@@ -106,7 +111,7 @@
     els.boss.className = 'sprite boss';
     els.bossName.textContent = level.boss.name;
 
-    els.taskTitle.textContent = `${level.boss.name} · ${level.concept}`;
+    els.taskTitle.textContent = `Konsep: ${level.concept}`;
     els.taskDesc.textContent = level.task;
     els.taskExpected.textContent = level.expected;
 
@@ -116,6 +121,14 @@
   }
 
   // ---------- Animasi ----------
+
+  // Bar HP boss balik penuh tanpa animasi pas level baru dimuat.
+  function resetHp() {
+    els.hpFill.style.transition = 'none';
+    els.hpFill.style.width = '100%';
+    void els.hpFill.offsetWidth;
+    els.hpFill.style.transition = '';
+  }
 
   function restartClass(el, className) {
     el.classList.remove(className);
@@ -138,6 +151,9 @@
     els.projectile.hidden = true;
 
     restartClass(els.boss, 'hit');
+    els.hpFill.style.width = '0%';
+    els.coinCount.textContent = String(levelIndex + 1);
+    restartClass(els.coins, 'bump');
     await wait(450);
     els.boss.classList.remove('hit');
 

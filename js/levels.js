@@ -7,8 +7,10 @@
 //               (dipakai kalau file gambarnya belum ada)
 //   task      : cerita + perintah buat user
 //   expected  : output persis yang harus keluar dari program
-//   starter   : kode awal di editor
-//   ghost     : baris-baris hint abu-abu (Tab buat nerima)
+//   starter   : kode awal di editor ('' = kosong, user ngetik dari #include)
+//   ghost     : baris-baris panduan abu-abu, urut dari atas. Cuma buat
+//               ngasih tau baris berikutnya, user tetap ngetik sendiri.
+//               Pakai ghostFor(...) biar kerangka program ga ditulis ulang
 //   requires  : (opsional) aturan tambahan biar user ga nyontek output langsung
 
 const TIER_LABEL = {
@@ -17,15 +19,14 @@ const TIER_LABEL = {
   expert: 'Expert',
 };
 
-const STARTER_TEMPLATE = `#include <iostream>
-using namespace std;
+// Editor mulai kosong, jadi user ngetik semuanya sendiri.
+const STARTER_EMPTY = '';
 
-int main() {
-    // tulis kode kamu di sini
-
-    return 0;
-}
-`;
+// Panduan = kerangka program + baris isi soal.
+// ghostFor('cout << 1;') -> #include, using namespace, main, isi, return, }
+const GHOST_TOP = ['#include <iostream>', 'using namespace std;', 'int main() {'];
+const GHOST_END = ['return 0;', '}'];
+const ghostFor = (...body) => [...GHOST_TOP, ...body, ...GHOST_END];
 
 const LEVELS = [
   {
@@ -39,8 +40,8 @@ const LEVELS = [
     },
     task: 'Print Slime lemah sama tulisan. Buat program yang menampilkan teks "Halo Dunia" di layar.',
     expected: 'Halo Dunia',
-    starter: STARTER_TEMPLATE,
-    ghost: ['cout << "Halo Dunia";'],
+    starter: STARTER_EMPTY,
+    ghost: ghostFor('cout << "Halo Dunia";'),
     requires: [],
   },
   {
@@ -54,8 +55,8 @@ const LEVELS = [
     },
     task: 'Var Goblin nyimpen barang di dalam kotak (variable). Buat variable int bernama umur yang isinya 19, lalu tampilkan isinya.',
     expected: '19',
-    starter: STARTER_TEMPLATE,
-    ghost: ['int umur = 19;', 'cout << umur;'],
+    starter: STARTER_EMPTY,
+    ghost: ghostFor('int umur = 19;', 'cout << umur;'),
     requires: [
       {
         pattern: /int\s+umur\s*=\s*19/,
@@ -74,8 +75,8 @@ const LEVELS = [
     },
     task: 'Operator Orc kuat, tapi lemah sama matematika. Hitung 7 dikali 6 pakai operator, lalu tampilkan hasilnya.',
     expected: '42',
-    starter: STARTER_TEMPLATE,
-    ghost: ['cout << 7 * 6;'],
+    starter: STARTER_EMPTY,
+    ghost: ghostFor('cout << 7 * 6;'),
     requires: [
       {
         pattern: /7\s*\*\s*6/,
