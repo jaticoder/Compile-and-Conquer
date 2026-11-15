@@ -47,6 +47,20 @@ const CodeEditor = (() => {
     return expected.slice(i);
   }
 
+  // Berapa karakter `typed` yang masih cocok sama awal `expected`.
+  // Dipakai buat milih baris panduan paling mirip kalau user salah ketik.
+  function matchLen(expected, typed) {
+    let i = 0;
+    let n = 0;
+    for (const ch of compact(typed)) {
+      while (i < expected.length && expected[i] === ' ') i++;
+      if (expected[i] !== ch) break;
+      i++;
+      n++;
+    }
+    return n;
+  }
+
   // Baris panduan yang belum ada di kode user (kecuali baris tempat kursor).
   function missingLines(lines, cursorIdx) {
     const have = new Map();
@@ -108,8 +122,10 @@ const CodeEditor = (() => {
     const missing = missingLines(lines, cursorIdx);
 
     let hint = null;
+    let complete = false; // baris di kursor udah persis sama satu baris panduan
     for (const line of missing) {
       let rest = typed === '' ? line : remainderAfter(line, typed);
+      if (rest === '') complete = true;
       if (rest && spaced) rest = rest.replace(/^ +/, '');
       if (rest) {
         hint = rest;
@@ -118,7 +134,32 @@ const CodeEditor = (() => {
     }
 
     if (!hint) {
-      hideGhost();
+      // Baris ini udah bener dan lengkap: ga ada yang perlu ditampilkan.
+      if (complete) {
+        hideGhost();
+        return;
+      }
+      // Ga ada baris panduan yang cocok (salah ketik / salah tap simbol).
+      // Jangan sembunyi: tampilkan baris panduan paling mirip di bawah kursor
+      // sebagai referensi. Cuma kalau kursor di baris terakhir, biar ga
+      // numpuk di atas teks baris lain.
+      const onLastLine = cursorIdx === lines.length - 1;
+      if (!onLastLine || missing.length === 0) {
+        hideGhost();
+        return;
+      }
+      let best = missing[0];
+      let bestLen = -1;
+      for (const line of missing) {
+        const n = matchLen(line, typed);
+        if (n > bestLen) {
+          best = line;
+          bestLen = n;
+        }
+      }
+      before.textContent = upToCaret;
+      ghost.textContent = '\n' + best;
+      syncScroll();
       return;
     }
 

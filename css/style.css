@@ -812,3 +812,37 @@ html, body { max-width: 100%; overflow-x: hidden; }
     transition-duration: 0.01ms !important;
   }
 }
+/* ============ Font judul: Press Start 2P (pixel, huruf jelas) ============
+   Font ini cuma punya satu ketebalan dan lebih lebar dari Pixelify Sans,
+   jadi ukurannya dikecilin. Taruh paling bawah biar menimpa aturan di atas. */
+:root { --display: 'Press Start 2P', ui-monospace, monospace; }
+
+.brand, .progress, .mute, .coins, .plate-name, .pop, .quest h2, .btn, .modal-card h2 {
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.brand { font-size: 20px; letter-spacing: 0; }
+.progress { gap: 14px; font-size: 11px; }
+.mute { font-size: 10px; }
+.coins { font-size: 14px; }
+.plate-name { font-size: 11px; }
+.pop { font-size: clamp(16px, 3.6vw, 28px); }
+.quest h2 { font-size: 15px; }
+.btn { font-size: 12px; }
+.modal-card h2 { font-size: 22px; }
+
+@media (max-width: 860px) {
+  .brand { font-size: 14px; }
+  .progress { gap: 10px; font-size: 9px; }
+  .mute { font-size: 9px; }
+  .coins { font-size: 12px; }
+  .plate-name { font-size: 9px; }
+  .quest h2 { font-size: 12px; }
+  .actions .btn { font-size: 11px; }
+  .modal-card h2 { font-size: 16px; }
+}
+
+@media (max-width: 400px) {
+  .pop { font-size: 16px; }
+}
