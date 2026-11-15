@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compile &amp; Conquer</title>
+  <meta name="description" content="Belajar C++ sambil ngalahin boss. Tulis kodenya, boss-nya tumbang.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="hud">
+    <div class="brand">Compile &amp; Conquer</div>
+    <div class="hud-info">
+      <span class="chip" id="hudTier">Basic</span>
+      <span class="chip" id="hudLevel">Level 1 / 3</span>
+    </div>
+  </header>
+
+  <main class="game">
+
+    <!-- Arena: hero di kiri, boss di kanan -->
+    <section class="stage tier-basic" id="stage" aria-label="Arena pertarungan">
+      <div class="sprite hero" id="hero"></div>
+      <div class="sprite boss" id="boss"></div>
+      <div class="boss-name" id="bossName"></div>
+      <div class="projectile" id="projectile" hidden></div>
+    </section>
+
+    <section class="panels">
+
+      <!-- Soal -->
+      <article class="panel task">
+        <h2 id="taskTitle">Memuat level...</h2>
+        <p id="taskDesc"></p>
+        <div class="expected">
+          <span>Output yang diminta</span>
+          <code id="taskExpected"></code>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="ghostToggle" checked>
+          <span>Hint teks abu-abu (tekan <kbd>Tab</kbd> buat nerima)</span>
+        </label>
+      </article>
+
+      <!-- Editor + hasil -->
+      <article class="panel code">
+        <div id="editor" aria-label="Editor kode C++"></div>
+        <div class="actions">
+          <button class="btn" id="runBtn" type="button">Jalankan ▶</button>
+          <button class="btn ghost" id="resetBtn" type="button">Reset kode</button>
+          <span class="shortcut">Ctrl + Enter</span>
+        </div>
+        <div class="console" id="console" aria-live="polite">Tulis kodenya, lalu klik Jalankan.</div>
+      </article>
+
+    </section>
+  </main>
+
+  <!-- Popup kalau boss kalah -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Boss kalah!</h2>
+      <p id="modalText"></p>
+      <button class="btn" id="nextBtn" type="button">Level berikutnya</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/judge.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
