@@ -20,6 +20,9 @@
     boss: $('boss'),
     bossName: $('bossName'),
     projectile: $('projectile'),
+    fx: $('fx'),
+    pop: $('pop'),
+    flash: $('flash'),
     taskTitle: $('taskTitle'),
     taskDesc: $('taskDesc'),
     taskExpected: $('taskExpected'),
@@ -31,6 +34,8 @@
     modalText: $('modalText'),
     nextBtn: $('nextBtn'),
   };
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let levelIndex = loadProgress();
   let busy = false;
@@ -109,6 +114,10 @@
     setSprite(els.hero, 'assets/hero/hero.png', '🧑‍💻', 'Hero');
     setSprite(els.boss, level.boss.sprite, level.boss.emoji, level.boss.name);
     els.boss.className = 'sprite boss';
+    els.hero.className = 'sprite hero';
+    els.pop.hidden = true;
+    els.projectile.hidden = true;
+    els.fx.textContent = '';
     els.bossName.textContent = level.boss.name;
 
     els.taskTitle.textContent = `Konsep: ${level.concept}`;
@@ -142,21 +151,91 @@
     els.boss.classList.remove('block');
   }
 
+  // Posisi + ukuran elemen relatif ke arena (buat naruh efek pas di tempatnya).
+  function box(el) {
+    const s = els.stage.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const left = r.left - s.left;
+    const top = r.top - s.top;
+    return { left, top, w: r.width, h: r.height, right: left + r.width, x: left + r.width / 2, y: top + r.height / 2 };
+  }
+
+  // Ledakan kotak-kotak kecil yang menyebar dari satu titik.
+  function burst(x, y, count, spread, colors) {
+    if (reduceMotion) return;
+    for (let i = 0; i < count; i++) {
+      const spark = document.createElement('i');
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+      const dist = spread * (0.45 + Math.random() * 0.75);
+      const size = [6, 8, 10][i % 3];
+      spark.className = 'spark';
+      spark.style.cssText =
+        `left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${colors[i % colors.length]};` +
+        `--dx:${Math.cos(angle) * dist}px;--dy:${Math.sin(angle) * dist}px;`;
+      spark.addEventListener('animationend', () => spark.remove());
+      els.fx.appendChild(spark);
+    }
+  }
+
+  // Output program muncul sebagai teks "damage" di atas boss.
+  function showPop(text, x, top) {
+    els.pop.textContent = text;
+    els.pop.hidden = false;
+    const half = els.pop.offsetWidth / 2 + 8;
+    const clamped = Math.min(Math.max(x, half), els.stage.clientWidth - half);
+    els.pop.style.left = `${clamped}px`;
+    els.pop.style.top = `${Math.max(top, 56)}px`;
+    restartClass(els.pop, 'rise');
+  }
+
+  // Di HP, arena bisa kegeser keluar layar waktu user ngetik. Tarik balik.
+  async function bringStageIntoView() {
+    const r = els.stage.getBoundingClientRect();
+    if (r.top >= 0 && r.bottom <= window.innerHeight) return;
+    els.stage.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    await wait(450);
+  }
+
   async function winSequence(output) {
-    const firstLine = output.trim().split('\n')[0].slice(0, 22);
-    els.projectile.textContent = firstLine;
+    const text = output.trim().split('\n')[0].slice(0, 18);
+    await bringStageIntoView();
+
+    const heroBox = box(els.hero);
+    const bossBox = box(els.boss);
+
+    // 1. Hero maju sedikit, lempar bola energi dari laptopnya.
+    restartClass(els.hero, 'attack');
+    await wait(reduceMotion ? 0 : 160);
+
+    const from = { x: heroBox.right, y: heroBox.top + heroBox.h * 0.45 };
+    const to = { x: bossBox.left + bossBox.w * 0.3, y: bossBox.y };
     els.projectile.hidden = false;
-    restartClass(els.projectile, 'fly');
-    await wait(650);
+    const flight = els.projectile.animate(
+      [
+        { transform: `translate(${from.x}px, ${from.y}px) scale(0.6)` },
+        { transform: `translate(${to.x}px, ${to.y}px) scale(1.15)` },
+      ],
+      { duration: reduceMotion ? 1 : 480, easing: 'cubic-bezier(0.5, 0, 1, 1)', fill: 'forwards' }
+    );
+    await flight.finished.catch(() => {});
+    flight.cancel();
     els.projectile.hidden = true;
 
+    // 2. Kena: flash, ledakan, arena goyang, boss kedip, HP habis.
+    restartClass(els.flash, 'go');
+    restartClass(els.stage, 'shake');
     restartClass(els.boss, 'hit');
+    burst(to.x, to.y, 14, 80, ['#ffffff', '#f5c22e', '#2ee6a6']);
+    showPop(text, bossBox.x, bossBox.top - 10);
     els.hpFill.style.width = '0%';
     els.coinCount.textContent = String(levelIndex + 1);
     restartClass(els.coins, 'bump');
-    await wait(450);
+    await wait(500);
     els.boss.classList.remove('hit');
+    els.hero.classList.remove('attack');
 
+    // 3. Boss meledak dan hilang.
+    burst(bossBox.x, bossBox.y, 28, 130, ['#ffffff', '#f5c22e', '#e8702a', '#2ee6a6']);
     els.boss.classList.add('defeated');
     await wait(950);
     showModal();

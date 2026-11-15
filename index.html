@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1d1a2e">
   <title>Compile &amp; Conquer</title>
   <meta name="description" content="Belajar C++ sambil ngalahin boss. Tulis kodenya, boss-nya tumbang.">
 
@@ -38,7 +39,10 @@
 
         <div class="sprite hero" id="hero"></div>
         <div class="sprite boss" id="boss"></div>
-        <div class="projectile" id="projectile" hidden></div>
+        <div class="projectile" id="projectile" hidden><i class="orb"></i></div>
+        <div class="fx" id="fx" aria-hidden="true"></div>
+        <div class="pop" id="pop" hidden></div>
+        <div class="flash" id="flash" aria-hidden="true"></div>
       </section>
     </div>
 
@@ -61,7 +65,8 @@
 
       <!-- Editor + hasil -->
       <article class="code">
-        <div id="editor" aria-label="Editor kode C++"></div>
+        <div id="editor"></div>
+        <div class="keys" id="keys" aria-label="Tombol simbol cepat"></div>
         <div class="actions">
           <button class="btn" id="runBtn" type="button">Jalankan ▶</button>
           <button class="btn ghost" id="resetBtn" type="button">Reset kode</button>
@@ -82,7 +87,6 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
   <script src="js/levels.js"></script>
   <script src="js/judge.js"></script>
   <script src="js/editor.js"></script>
