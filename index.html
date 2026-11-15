@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body data-view="menu">
 
@@ -20,7 +20,24 @@
       <span id="hudTier">Basic</span>
       <span id="hudLevel">Level 1 dari 5</span>
     </p>
+    <button class="menu-btn" id="volBtn" type="button" aria-expanded="false" aria-controls="mixer">Suara</button>
     <button class="menu-btn" id="menuBtn" type="button">Menu</button>
+
+    <!-- Atur volume tanpa keluar dari game -->
+    <div class="mixer" id="mixer" hidden role="group" aria-label="Pengaturan suara">
+      <label class="vol-row">
+        <span class="vol-label">Musik <span class="vol-num"><b class="vol-val" data-kind="music">70</b>%</span></span>
+        <input class="vol" type="range" min="0" max="100" step="5" data-kind="music" aria-label="Volume musik">
+      </label>
+      <label class="vol-row">
+        <span class="vol-label">Efek suara <span class="vol-num"><b class="vol-val" data-kind="sfx">70</b>%</span></span>
+        <input class="vol" type="range" min="0" max="100" step="5" data-kind="sfx" aria-label="Volume efek suara">
+      </label>
+      <div class="setting-row">
+        <span>Efek ngetik</span>
+        <button class="btn ghost small type-toggle" type="button" aria-pressed="true">Nyala</button>
+      </div>
+    </div>
   </header>
 
   <main class="game">
@@ -101,13 +118,32 @@
 
       <section class="lobby-settings" id="lobbySettings" aria-labelledby="settingsTitle" hidden>
         <h2 id="settingsTitle">Pengaturan</h2>
-        <div class="setting-row">
-          <span>Musik</span>
-          <button class="btn ghost small" id="musicBtn" type="button" aria-pressed="true">Nyala</button>
+        <div class="setting-block">
+          <div class="setting-row">
+            <span>Musik</span>
+            <button class="btn ghost small" id="musicBtn" type="button" aria-pressed="true">Nyala</button>
+          </div>
+          <label class="vol-row">
+            <span class="vol-label">Volume <span class="vol-num"><b class="vol-val" data-kind="music">70</b>%</span></span>
+            <input class="vol" type="range" min="0" max="100" step="5" data-kind="music" aria-label="Volume musik">
+          </label>
         </div>
-        <div class="setting-row">
-          <span>Efek suara</span>
-          <button class="btn ghost small" id="muteBtn" type="button" aria-pressed="true">Nyala</button>
+        <div class="setting-block">
+          <div class="setting-row">
+            <span>Efek suara</span>
+            <button class="btn ghost small" id="muteBtn" type="button" aria-pressed="true">Nyala</button>
+          </div>
+          <label class="vol-row">
+            <span class="vol-label">Volume <span class="vol-num"><b class="vol-val" data-kind="sfx">70</b>%</span></span>
+            <input class="vol" type="range" min="0" max="100" step="5" data-kind="sfx" aria-label="Volume efek suara">
+          </label>
+        </div>
+        <div class="setting-block">
+          <div class="setting-row">
+            <span>Efek ngetik</span>
+            <button class="btn ghost small type-toggle" type="button" aria-pressed="true">Nyala</button>
+          </div>
+          <p class="setting-note">Suara tik, percikan di kursor, dan combo saat kamu mengetik.</p>
         </div>
         <button class="btn" id="settingsBack" type="button">Kembali</button>
       </section>
@@ -138,11 +174,11 @@
     </div>
   </div>
 
-  <script src="js/levels.js?v=8"></script>
-  <script src="js/sound.js?v=9"></script>
-  <script src="js/errors.js?v=8"></script>
-  <script src="js/judge.js?v=8"></script>
-  <script src="js/editor.js?v=8"></script>
-  <script src="js/game.js?v=9"></script>
+  <script src="js/levels.js?v=10"></script>
+  <script src="js/sound.js?v=10"></script>
+  <script src="js/errors.js?v=10"></script>
+  <script src="js/judge.js?v=10"></script>
+  <script src="js/editor.js?v=10"></script>
+  <script src="js/game.js?v=10"></script>
 </body>
 </html>

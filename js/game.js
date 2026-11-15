@@ -41,6 +41,8 @@
     modalMenuBtn: $('modalMenuBtn'),
     muteBtn: $('muteBtn'),
     musicBtn: $('musicBtn'),
+    volBtn: $('volBtn'),
+    mixer: $('mixer'),
     alarm: $('alarm'),
     codeCard: document.querySelector('.code'),
     // lobby
@@ -637,6 +639,73 @@
     els.musicBtn.classList.toggle('off', off);
   }
 
+  // ----- Volume + efek ngetik -----
+  // Slider dan tombol yang sama ada di dua tempat (pengaturan lobby dan popover
+  // di dalam game), jadi semuanya dicari lewat class dan disinkronkan.
+
+  function paintVolumes() {
+    document.querySelectorAll('input.vol').forEach((slider) => {
+      const value = Sound.getVolume(slider.dataset.kind);
+      slider.value = String(value);
+      slider.style.setProperty('--fill', `${value}%`);
+    });
+    document.querySelectorAll('.vol-val').forEach((label) => {
+      label.textContent = String(Sound.getVolume(label.dataset.kind));
+    });
+  }
+
+  function paintTypeFx() {
+    const on = CodeEditor.isTypingFx();
+    document.querySelectorAll('.type-toggle').forEach((btn) => {
+      btn.textContent = on ? 'Nyala' : 'Mati';
+      btn.setAttribute('aria-pressed', String(on));
+      btn.classList.toggle('off', !on);
+    });
+  }
+
+  function setMixer(open) {
+    els.mixer.hidden = !open;
+    els.volBtn.setAttribute('aria-expanded', String(open));
+    if (open) anim(els.mixer, [{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' });
+  }
+
+  function initMixer() {
+    document.querySelectorAll('input.vol').forEach((slider) => {
+      const kind = slider.dataset.kind;
+      slider.addEventListener('input', () => {
+        Sound.unlock();
+        Sound.setVolume(kind, Number(slider.value));
+        paintVolumes();
+      });
+      // Lepas slider efek: bunyiin contoh biar kedengeran segede apa.
+      slider.addEventListener('change', () => { if (kind === 'sfx') Sound.click(); });
+    });
+
+    document.querySelectorAll('.type-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        CodeEditor.setTypingFx(!CodeEditor.isTypingFx());
+        paintTypeFx();
+        if (CodeEditor.isTypingFx()) Sound.click();
+      });
+    });
+
+    els.volBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      Sound.click();
+      setMixer(els.mixer.hidden);
+    });
+    // Klik di luar popover atau tekan Esc menutupnya.
+    document.addEventListener('click', (event) => {
+      if (!els.mixer.hidden && !els.mixer.contains(event.target)) setMixer(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !els.mixer.hidden) { setMixer(false); els.volBtn.focus(); }
+    });
+
+    paintVolumes();
+    paintTypeFx();
+  }
+
   async function showSettings(open) {
     const [hide, show] = open ? [els.lobbyMenu, els.lobbySettings] : [els.lobbySettings, els.lobbyMenu];
     hide.hidden = true;
@@ -649,6 +718,7 @@
   async function openLobby() {
     if (busy || transitioning) return;
     transitioning = true;
+    setMixer(false);
     els.lobby.classList.remove('leaving');
     els.lobbyMenu.hidden = false;
     els.lobbySettings.hidden = true;
@@ -756,6 +826,7 @@
     paintMusic();
     paintMute();
     paintPlay();
+    initMixer();
 
     // Animasi masuk lobby (CSS, kelas .boot). Dilepas setelah selesai biar
     // ga ke-replay tiap balik ke menu.

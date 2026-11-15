@@ -1191,3 +1191,141 @@ body.lock { overflow: hidden; }
   60% { opacity: 1; scale: 1.12; translate: 0 4px; }
   to { opacity: 1; scale: 1; translate: 0 0; }
 }
+
+/* ============================================================
+   Mixer volume + efek ngetik (v10)
+   ============================================================ */
+
+/* Dua tombol di topbar: Suara dan Menu. */
+.topbar { position: relative; }
+#volBtn { margin-left: auto; }
+#menuBtn { margin-left: 0; }
+
+/* ---------- Slider volume ---------- */
+.vol-row { display: block; margin: 0; }
+
+.vol-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: var(--paper);
+}
+
+.vol-num { font-family: var(--mono); font-weight: 600; color: var(--coin); }
+.vol-val { font-weight: 600; }
+
+.vol {
+  --fill: 70%;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.vol::-webkit-slider-runnable-track {
+  height: 10px;
+  background: linear-gradient(90deg, var(--coin) var(--fill), #15131f var(--fill));
+  box-shadow: 0 0 0 3px #3a3560;
+}
+
+.vol::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 26px;
+  margin-top: -8px;
+  background: var(--paper);
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 0 0 3px #2a1208;
+}
+
+.vol::-moz-range-track { height: 10px; background: #15131f; box-shadow: 0 0 0 3px #3a3560; }
+.vol::-moz-range-progress { height: 10px; background: var(--coin); }
+.vol::-moz-range-thumb { width: 18px; height: 26px; background: var(--paper); border: 0; border-radius: 0; box-shadow: 0 0 0 3px #2a1208; }
+.vol:focus-visible { outline: 3px solid var(--coin); outline-offset: 6px; }
+
+/* ---------- Pengaturan di lobby ---------- */
+.setting-block { margin-bottom: 26px; text-align: left; }
+.setting-block .setting-row { margin-bottom: 12px; }
+.setting-note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+
+/* ---------- Popover volume di dalam game ---------- */
+.mixer {
+  position: absolute;
+  top: calc(100% - 12px);
+  right: 20px;
+  z-index: 30;
+  display: grid;
+  gap: 18px;
+  width: min(300px, calc(100vw - 32px));
+  padding: 18px 18px 20px;
+  background: var(--plank);
+  --c: var(--plank-line);
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c),
+    0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+.mixer .setting-row { margin: 0; }
+
+/* ---------- Efek ngetik di editor ---------- */
+.ed { --heat: 0; transition: box-shadow 0.4s ease; }
+
+.ed:focus-within {
+  box-shadow:
+    inset 0 0 0 2px var(--coin),
+    inset 0 0 calc(var(--heat) * 28px) rgba(245, 194, 46, calc(var(--heat) * 0.3));
+}
+
+.ed-fx { position: absolute; inset: 0; z-index: 3; overflow: hidden; pointer-events: none; }
+.ed-spark { position: absolute; display: block; pointer-events: none; }
+
+.ed-combo {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 4;
+  padding: 5px 9px 6px;
+  font-family: var(--display);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--paper);
+  background: rgba(29, 26, 46, 0.88);
+  box-shadow: 0 0 0 3px #3a3560;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.ed-combo.on { opacity: 1; transform: none; }
+.ed-combo[data-lv="1"] { color: var(--coin); box-shadow: 0 0 0 3px var(--coin-dark); }
+.ed-combo[data-lv="2"] { color: #ff9f43; box-shadow: 0 0 0 3px #b4600f, 0 0 14px rgba(255, 159, 67, 0.5); }
+.ed-combo[data-lv="3"] { color: var(--spark); box-shadow: 0 0 0 3px #138a64, 0 0 18px rgba(46, 230, 166, 0.6); }
+.ed-combo.tick { animation: combo-tick 0.12s ease-out; }
+
+@keyframes combo-tick {
+  0% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+/* Baris yang persis sama kayak panduan: nomornya berkilau hijau sebentar. */
+.ed-gutter .ln.ok { color: var(--ok); font-weight: 600; animation: ln-ok 0.5s ease-out; }
+
+@keyframes ln-ok {
+  0% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+@media (max-width: 860px) {
+  .mixer { right: 16px; }
+  .ed-combo { top: 6px; right: 8px; font-size: 9px; padding: 4px 7px 5px; }
+}

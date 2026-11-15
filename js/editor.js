@@ -39,6 +39,23 @@ const CodeEditor = (() => {
   let errLine = 0;
   let dedenting = false;
 
+  // ----- Efek ngetik: tik, percikan di kursor, combo, kilau tiap baris benar -----
+  const FX_KEY = 'compile-and-conquer-typefx';
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SPARK_COLORS = ['#f5c22e', '#ffffff', '#2ee6a6', '#ff9f43'];
+  const OK_COLORS = ['#6fdc7a', '#ffffff', '#2ee6a6'];
+  const MILESTONES = [10, 25, 50, 100];
+  let fxOn = true;
+  try { fxOn = localStorage.getItem(FX_KEY) !== '0'; } catch (err) { /* abaikan */ }
+  let edEl = null;     // elemen .ed (buat variabel --heat)
+  let fxLayer = null;  // lapisan percikan
+  let comboEl = null;  // lencana combo
+  let combo = 0;
+  let lastKey = 0;
+  let comboTimer = null;
+  let okLine = 0;      // baris yang lagi berkilau hijau di nomor baris
+  let okTimer = null;
+
   const compact = (text) => text.replace(/\s+/g, '');
 
   // Cek apakah `typed` (tanpa spasi) cocok sama awal `expected`.
@@ -180,7 +197,7 @@ const CodeEditor = (() => {
     const count = ta.value.split('\n').length;
     let nums = '';
     for (let n = 1; n <= count; n++) {
-      nums += `<span class="ln${n === errLine ? ' err' : ''}">${n}</span>`;
+      nums += `<span class="ln${n === errLine ? ' err' : ''}${n === okLine ? ' ok' : ''}">${n}</span>`;
     }
     gutter.innerHTML = nums;
   }
@@ -233,6 +250,117 @@ const CodeEditor = (() => {
     syncScroll();
   }
 
+  // ---------- Efek ngetik ----------
+
+  // Posisi kursor relatif ke area teks (diukur dari penanda di lapisan cermin).
+  function caretXY() {
+    return {
+      x: caretMark.offsetLeft - ta.scrollLeft,
+      y: caretMark.offsetTop - ta.scrollTop + caretMark.offsetHeight / 2,
+    };
+  }
+
+  // Kotak-kotak kecil beterbangan dari satu titik. `rise` > 0 naik, < 0 jatuh.
+  function sparks(x, y, count, colors, spread, rise) {
+    if (reduceMotion || !fxLayer) return;
+    for (let i = 0; i < count; i++) {
+      if (fxLayer.childElementCount > 36) return; // batas biar ga berat di HP
+      const spark = document.createElement('i');
+      const size = 3 + Math.floor(Math.random() * 3);
+      spark.className = 'ed-spark';
+      spark.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${colors[i % colors.length]};`;
+      fxLayer.appendChild(spark);
+      const dx = (Math.random() - 0.5) * spread * 2;
+      const dy = -rise * (0.4 + Math.random() * 0.8) + (Math.random() - 0.3) * spread * 0.4;
+      const a = spark.animate(
+        [{ transform: 'translate(0, 0)', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px)`, opacity: 0 }],
+        { duration: 320 + Math.random() * 220, easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' }
+      );
+      a.onfinish = () => spark.remove();
+      a.oncancel = () => spark.remove();
+    }
+  }
+
+  const comboLevel = (n) => (n >= 50 ? 3 : n >= 25 ? 2 : n >= 10 ? 1 : 0);
+
+  function endCombo() {
+    combo = 0;
+    comboEl.classList.remove('on', 'tick');
+    edEl.style.setProperty('--heat', '0');
+  }
+
+  // Satu karakter diketik. Balikin true kalau tepat di tonggak combo.
+  function bumpCombo() {
+    const now = performance.now();
+    if (now - lastKey > 1600) combo = 0;
+    lastKey = now;
+    combo++;
+    edEl.style.setProperty('--heat', Math.min(1, combo / 50).toFixed(2));
+    if (combo >= 5) {
+      comboEl.textContent = `x${combo}`;
+      comboEl.dataset.lv = String(comboLevel(combo));
+      comboEl.classList.add('on');
+      if (!reduceMotion) {
+        comboEl.classList.remove('tick');
+        void comboEl.offsetWidth;
+        comboEl.classList.add('tick');
+      }
+    }
+    clearTimeout(comboTimer);
+    comboTimer = setTimeout(endCombo, 1700);
+    return MILESTONES.includes(combo) || (combo > 100 && combo % 50 === 0);
+  }
+
+  function typingFx(event) {
+    if (!fxOn) return;
+    const type = event.inputType || '';
+    const data = event.data || '';
+    const { x, y } = caretXY();
+
+    if (data.includes('\n') || type === 'insertLineBreak' || type === 'insertParagraph') {
+      Sound.typeEnter();
+      return;
+    }
+    if (type.startsWith('delete')) {
+      Sound.typeBack();
+      sparks(x, y, 1, ['#6f6a92'], 5, -8);
+      return;
+    }
+    if (type === 'insertFromPaste' || type === 'insertFromDrop') {
+      sparks(x, y, 8, SPARK_COLORS, 22, 14);
+      return;
+    }
+
+    const milestone = bumpCombo();
+    Sound.type();
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
+    if (!/^\s*$/.test(data)) sparks(x, y, coarse ? 2 : 3, SPARK_COLORS, 12, 16);
+    if (milestone) {
+      Sound.combo(comboLevel(combo));
+      sparks(x, y, 14, SPARK_COLORS, 36, 30);
+    }
+  }
+
+  // Baris yang persis sama kayak salah satu baris panduan (spasi diabaikan).
+  function isGuideLine(text) {
+    const key = compact(text);
+    if (key.length < 4) return false;
+    return ghostLines.some((line) => {
+      const k = compact(line);
+      return k === key || (key.startsWith('#include') && k.startsWith('#include'));
+    });
+  }
+
+  // Enter di baris yang benar: ting, percikan hijau, nomor baris berkilau.
+  function lineDone(pos, lineIdx) {
+    Sound.lineDone();
+    sparks(pos.x, pos.y, 12, OK_COLORS, 30, 22);
+    okLine = lineIdx + 1;
+    updateGutter();
+    clearTimeout(okTimer);
+    okTimer = setTimeout(() => { okLine = 0; updateGutter(); }, 900);
+  }
+
   function onChange() {
     errLine = 0; // user mulai ngedit: tandanya hilang
     paintError();
@@ -279,6 +407,11 @@ const CodeEditor = (() => {
     const prev = value[start - 1];
     const next = value[ta.selectionEnd];
 
+    // Baris yang baru selesai diketik cocok sama panduan? Rayakan setelah Enter.
+    const lineIdx = value.slice(0, start).split('\n').length - 1;
+    const celebrate = fxOn && isGuideLine(value.slice(lineStart, start));
+    const where = celebrate ? caretXY() : null;
+
     event.preventDefault();
     if (prev === '{' && next === '}') {
       const inner = canDeepen ? INDENT : '';
@@ -288,6 +421,7 @@ const CodeEditor = (() => {
     } else {
       insert('\n' + indent + (prev === '{' && canDeepen ? INDENT : ''));
     }
+    if (celebrate) lineDone(where, lineIdx);
   }
 
   // Ketik "}" di baris yang isinya cuma spasi: mundur satu level indent.
@@ -338,9 +472,14 @@ const CodeEditor = (() => {
           <textarea class="ed-input" wrap="off" spellcheck="false" autocomplete="off"
             autocapitalize="off" autocorrect="off" enterkeyhint="enter"
             aria-label="Editor kode C++"></textarea>
+          <div class="ed-fx" aria-hidden="true"></div>
+          <div class="ed-combo" aria-hidden="true"></div>
         </div>
       </div>`;
 
+    edEl = host.querySelector('.ed');
+    fxLayer = host.querySelector('.ed-fx');
+    comboEl = host.querySelector('.ed-combo');
     errEl = host.querySelector('.ed-errline');
     gutter = host.querySelector('.ed-gutter');
     mirror = host.querySelector('.ed-mirror');
@@ -350,6 +489,7 @@ const CodeEditor = (() => {
     ta = host.querySelector('.ed-input');
 
     ta.addEventListener('input', onChange);
+    ta.addEventListener('input', typingFx); // setelah onChange: posisi kursor udah terbaru
     ta.addEventListener('scroll', syncScroll);
     ta.addEventListener('keyup', refreshGhost);
     ta.addEventListener('click', refreshGhost);
@@ -424,6 +564,13 @@ const CodeEditor = (() => {
     },
     onRun(handler) {
       runHandler = handler;
+    },
+    // Efek ngetik (suara tik, percikan, combo) bisa dimatiin. Disimpan.
+    isTypingFx: () => fxOn,
+    setTypingFx(on) {
+      fxOn = on;
+      try { localStorage.setItem(FX_KEY, on ? '1' : '0'); } catch (err) { /* abaikan */ }
+      if (!on && edEl) endCombo();
     },
   };
 })();

@@ -9,14 +9,65 @@ const Sound = (() => {
   let ctx = null;
   let noiseBuffer = null;
   let muted = false;
+  let lastType = 0;
 
   try { muted = localStorage.getItem(MUTE_KEY) === '1'; } catch (err) { /* abaikan */ }
+
+  // ---------- Mixer: volume musik dan efek terpisah ----------
+  // Jalur suara: musik -> musicBus \
+  //              efek  -> sfxBus   -> pembatas -> speaker
+  // Pembatas puncak (soft clipper) nahan suara di volume tinggi biar ga pecah.
+  // Di posisi 70 (bawaan) jalurnya persis sama kayak sebelum ada slider.
+  // Slider 0-100. Posisi 70 = loudness bawaan; di atas 70 dikeraskan, di bawahnya
+  // dikecilin (kurva kuadrat biar enak di telinga).
+  const VOL_KEYS = { music: 'compile-and-conquer-music-vol', sfx: 'compile-and-conquer-sfx-vol' };
+  const VOL_DEFAULT = 70;
+  const vol = { music: VOL_DEFAULT, sfx: VOL_DEFAULT };
+  Object.keys(VOL_KEYS).forEach((kind) => {
+    try {
+      const saved = parseInt(localStorage.getItem(VOL_KEYS[kind]), 10);
+      if (saved >= 0 && saved <= 100) vol[kind] = saved;
+    } catch (err) { /* abaikan */ }
+  });
+  const gainFor = (v) => Math.pow(v / VOL_DEFAULT, 2);
+
+  let sfxBus = null;
+  let musicBus = null;
+
+  // Pembatas puncak: lurus (ga mengubah suara sama sekali) sampai amplitudo 0,8,
+  // baru di atasnya dilengkungkan pelan ke 1,0. Sengaja BUKAN DynamicsCompressor:
+  // node itu nambah gain otomatis, jadi suara jadi lebih keras walau belum mentok.
+  function limiterCurve() {
+    const size = 4096;
+    const curve = new Float32Array(size);
+    for (let i = 0; i < size; i++) {
+      const x = (i / (size - 1)) * 2 - 1;
+      const a = Math.abs(x);
+      curve[i] = a <= 0.8 ? x : Math.sign(x) * (0.8 + 0.2 * Math.tanh((a - 0.8) / 0.2));
+    }
+    return curve;
+  }
+
+  function buildGraph(ac) {
+    const limiter = ac.createWaveShaper();
+    limiter.curve = limiterCurve();
+    limiter.oversample = 'none';
+    limiter.connect(ac.destination);
+
+    sfxBus = ac.createGain();
+    sfxBus.gain.value = gainFor(vol.sfx);
+    sfxBus.connect(limiter);
+    musicBus = ac.createGain();
+    musicBus.gain.value = gainFor(vol.music);
+    musicBus.connect(limiter);
+  }
 
   function audio() {
     if (!ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
+      buildGraph(ctx);
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
@@ -43,7 +94,7 @@ const Sound = (() => {
     osc.frequency.exponentialRampToValueAtTime(Math.max(to, 1), t + dur);
     gain.gain.setValueAtTime(vol, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    osc.connect(gain).connect(ac.destination);
+    osc.connect(gain).connect(sfxBus);
     osc.start(t);
     osc.stop(t + dur + 0.02);
   }
@@ -62,7 +113,7 @@ const Sound = (() => {
     filter.frequency.exponentialRampToValueAtTime(to, t + dur);
     gain.gain.setValueAtTime(vol, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-    src.connect(filter).connect(gain).connect(ac.destination);
+    src.connect(filter).connect(gain).connect(sfxBus);
     src.start(t);
     src.stop(t + dur + 0.02);
   }
@@ -140,7 +191,7 @@ const Sound = (() => {
     const bus = ac.createGain();
     bus.connect(soften);
     soften.connect(out);
-    out.connect(ac.destination);
+    out.connect(musicBus);
 
     // Gema tipis buat lead (tiga not 1/8, cepat habis).
     const echoIn = ac.createGain();
@@ -312,6 +363,16 @@ const Sound = (() => {
       if (!muted) audio();
       startMusic();
     },
+    // Volume 0-100, disimpan. Berlaku langsung walau lagi dimainkan.
+    getVolume: (kind) => vol[kind],
+    setVolume(kind, value) {
+      if (!(kind in vol)) return;
+      vol[kind] = Math.max(0, Math.min(100, Math.round(value)));
+      try { localStorage.setItem(VOL_KEYS[kind], String(vol[kind])); } catch (err) { /* abaikan */ }
+      const bus = kind === 'music' ? musicBus : sfxBus;
+      if (bus) bus.gain.setTargetAtTime(gainFor(vol[kind]), bus.context.currentTime, 0.03);
+    },
+
     isMuted: () => muted,
     setMuted(value) {
       muted = value;
@@ -349,6 +410,31 @@ const Sound = (() => {
     paper() {
       burst({ dur: 0.28, from: 4200, to: 1200, vol: 0.08 });
       tone({ type: 'triangle', from: 400, to: 640, dur: 0.14, vol: 0.06 });
+    },
+
+    // ----- Efek ngetik -----
+    // Tik pendek, nadanya acak sedikit biar ga monoton. Dibatasi biar ga numpuk.
+    type() {
+      const now = performance.now();
+      if (now - lastType < 22) return;
+      lastType = now;
+      tone({ type: 'square', from: 900 + Math.random() * 500, to: 560 + Math.random() * 160, dur: 0.035, vol: 0.03 });
+    },
+    typeBack() { tone({ type: 'triangle', from: 320, to: 190, dur: 0.045, vol: 0.05 }); },
+    typeEnter() {
+      tone({ type: 'square', from: 620, to: 880, dur: 0.06, vol: 0.045 });
+      burst({ dur: 0.05, from: 5000, to: 1500, vol: 0.03 });
+    },
+    // Satu baris persis sama kayak panduan, Enter ditekan: ting dua nada.
+    lineDone() {
+      tone({ type: 'triangle', from: 784, to: 784, dur: 0.1, vol: 0.1 });
+      tone({ type: 'triangle', from: 1175, to: 1175, start: 0.08, dur: 0.16, vol: 0.1 });
+    },
+    // Tonggak combo: arpeggio naik, makin panjang di level tinggi.
+    combo(level) {
+      [523, 659, 784, 1047, 1319].slice(0, 3 + Math.min(level, 2)).forEach((f, i) =>
+        tone({ type: 'square', from: f, to: f, start: i * 0.055, dur: 0.1, vol: 0.07 })
+      );
     },
 
     // Hero ngisi tenaga.
