@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -18,8 +18,9 @@
     <h1 class="brand">Compile &amp; Conquer</h1>
     <p class="progress">
       <span id="hudTier">Basic</span>
-      <span id="hudLevel">Level 1 dari 3</span>
+      <span id="hudLevel">Level 1 dari 5</span>
     </p>
+    <button class="mute" id="muteBtn" type="button" aria-pressed="false">Suara: nyala</button>
   </header>
 
   <main class="game">
@@ -79,6 +80,9 @@
   </main>
 
   <!-- Popup kalau boss kalah -->
+  <!-- Kilat merah kalau kode salah -->
+  <div class="alarm" id="alarm" aria-hidden="true"></div>
+
   <div class="modal" id="modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h2 id="modalTitle">Boss kalah!</h2>
@@ -87,9 +91,11 @@
     </div>
   </div>
 
-  <script src="js/levels.js?v=3"></script>
-  <script src="js/judge.js?v=3"></script>
-  <script src="js/editor.js?v=3"></script>
-  <script src="js/game.js?v=3"></script>
+  <script src="js/levels.js?v=5"></script>
+  <script src="js/sound.js?v=5"></script>
+  <script src="js/errors.js?v=5"></script>
+  <script src="js/judge.js?v=5"></script>
+  <script src="js/editor.js?v=5"></script>
+  <script src="js/game.js?v=5"></script>
 </body>
 </html>

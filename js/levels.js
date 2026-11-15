@@ -84,4 +84,63 @@ const LEVELS = [
       },
     ],
   },
+  {
+    id: 4,
+    tier: 'medium',
+    concept: 'if-else',
+    boss: {
+      name: 'Fork Wraith',
+      sprite: 'assets/bosses/fork-wraith.png',
+      emoji: '👻',
+    },
+    task: 'Fork Wraith berdiri di persimpangan dan selalu milih salah satu jalan. Buat variable int nilai = 80. Kalau nilai >= 75 (lebih dari atau sama dengan: ketik tanda > lalu tanda =), tampilkan "Lulus". Kalau tidak, tampilkan "Remedial".',
+    expected: 'Lulus',
+    starter: STARTER_EMPTY,
+    ghost: ghostFor(
+      'int nilai = 80;',
+      'if (nilai >= 75) {',
+      'cout << "Lulus";',
+      '} else {',
+      'cout << "Remedial";',
+      '}'
+    ),
+    requires: [
+      {
+        pattern: /int\s+nilai\s*=\s*80/,
+        message: 'Outputnya udah bener, tapi bikin dulu variable-nya ya: int nilai = 80;',
+      },
+      {
+        pattern: /if\s*\([^)]*nilai[^)]*\)/,
+        message: 'Hampir! Pilih jalannya pakai if (...) yang ngecek nilai, jangan langsung print "Lulus".',
+      },
+      {
+        pattern: /else/,
+        message: 'Jalan kedua belum ada. Tambahin else buat kasus nilainya di bawah 75.',
+      },
+    ],
+  },
+  {
+    id: 5,
+    tier: 'medium',
+    concept: 'for loop',
+    boss: {
+      name: 'Loop Serpent',
+      sprite: 'assets/bosses/loop-serpent.png',
+      emoji: '🐍',
+    },
+    task: 'Loop Serpent muter terus tanpa henti. Hentikan pakai for. Tampilkan angka 1 sampai 5, satu angka per baris.',
+    expected: '1\n2\n3\n4\n5',
+    starter: STARTER_EMPTY,
+    ghost: ghostFor(
+      'for (int i = 1; i <= 5; i++) {',
+      'cout << i << "\\n";',
+      '}'
+    ),
+    requires: [
+      {
+        pattern: /for\s*\(/,
+        message: 'Outputnya bener, tapi pakai for ya. Ular ini cuma tumbang sama loop.',
+      },
+    ],
+  },
 ];

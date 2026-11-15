@@ -33,6 +33,9 @@
     modal: $('modal'),
     modalText: $('modalText'),
     nextBtn: $('nextBtn'),
+    muteBtn: $('muteBtn'),
+    alarm: $('alarm'),
+    codeCard: document.querySelector('.code'),
   };
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,6 +78,38 @@
       container.appendChild(fallback);
     });
     container.appendChild(img);
+  }
+
+  // Error sintaks: baris yang salah + penjelasan ramah. Pesan asli compiler dilipat.
+  function showSyntaxError(info) {
+    els.console.className = 'console error';
+    els.console.textContent = '';
+
+    const title = document.createElement('strong');
+    title.textContent = 'Syntax-nya belum benar';
+    els.console.appendChild(title);
+
+    if (info.line) {
+      const where = document.createElement('span');
+      where.className = 'where';
+      where.textContent = `Baris ${info.line}: ${info.codeLine || '(kosong)'}`;
+      els.console.appendChild(where);
+    }
+
+    const why = document.createElement('p');
+    why.className = 'why';
+    why.textContent = info.message;
+    els.console.appendChild(why);
+
+    if (info.raw) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = 'Pesan asli compiler';
+      const pre = document.createElement('pre');
+      pre.textContent = info.raw;
+      details.append(summary, pre);
+      els.console.appendChild(details);
+    }
   }
 
   function showConsole(kind, heading, body) {
@@ -145,7 +180,16 @@
     el.classList.add(className);
   }
 
+  // Efek kalau kode salah: bingkai merah, kartu editor goyang, pesan digulung ke layar.
+  function failImpact() {
+    restartClass(els.alarm, 'go');
+    restartClass(els.codeCard, 'oops');
+    els.console.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  }
+
   async function blockBoss() {
+    Sound.wrong();
+    failImpact();
     restartClass(els.boss, 'block');
     await wait(450);
     els.boss.classList.remove('block');
@@ -204,12 +248,14 @@
     const bossBox = box(els.boss);
 
     // 1. Hero maju sedikit, lempar bola energi dari laptopnya.
+    Sound.charge();
     restartClass(els.hero, 'attack');
     await wait(reduceMotion ? 0 : 160);
 
     const from = { x: heroBox.right, y: heroBox.top + heroBox.h * 0.45 };
     const to = { x: bossBox.left + bossBox.w * 0.3, y: bossBox.y };
     els.projectile.hidden = false;
+    Sound.zap();
     const flight = els.projectile.animate(
       [
         { transform: `translate(${from.x}px, ${from.y}px) scale(0.6)` },
@@ -221,6 +267,7 @@
     flight.cancel();
     els.projectile.hidden = true;
 
+    Sound.hit();
     // 2. Kena: flash, ledakan, arena goyang, boss kedip, HP habis.
     restartClass(els.flash, 'go');
     restartClass(els.stage, 'shake');
@@ -236,6 +283,7 @@
 
     // 3. Boss meledak dan hilang.
     burst(bossBox.x, bossBox.y, 28, 130, ['#ffffff', '#f5c22e', '#e8702a', '#2ee6a6']);
+    Sound.defeat();
     els.boss.classList.add('defeated');
     await wait(950);
     showModal();
@@ -249,6 +297,7 @@
       : `${bossName} tumbang berkat kodemu.`;
     els.nextBtn.textContent = last ? 'Main dari awal' : 'Level berikutnya';
     els.modal.hidden = false;
+    Sound.win();
     els.nextBtn.focus();
   }
 
@@ -265,11 +314,9 @@
     }
 
     if (result.kind === 'compile') {
-      showConsole(
-        'error',
-        'Kodenya belum bisa dikompilasi',
-        `${firstLines(result.compileOutput, 8)}\n\nTips: cek lagi tanda kutip, titik koma (;), dan huruf besar-kecil.`
-      );
+      const info = ErrorHelp.explain(result.compileOutput, code);
+      showSyntaxError(info);
+      CodeEditor.markError(info.line);
       await blockBoss();
       return;
     }
@@ -292,10 +339,16 @@
 
     // kind === 'ok'
     if (!sameOutput(result.stdout, level.expected)) {
+      const got = normalizeOutput(result.stdout);
+      const want = normalizeOutput(level.expected);
+      let tip = '';
+      if (!got) tip = 'Programnya jalan, tapi ga menampilkan apa-apa. Pakai cout << ...; buat nampilin.\n\n';
+      else if (got.toLowerCase() === want.toLowerCase()) tip = 'Isinya udah bener, tapi huruf besar-kecilnya beda.\n\n';
+      else if (got.replace(/\s+/g, '') === want.replace(/\s+/g, '')) tip = 'Isinya udah bener, tapi spasi atau baris barunya beda.\n\n';
       showConsole(
         'error',
         'Output belum sesuai',
-        `Output kamu:\n${result.stdout.trim() || '(kosong)'}\n\nYang diminta:\n${level.expected}`
+        `${tip}Output kamu:\n${got || '(kosong)'}\n\nYang diminta:\n${level.expected}`
       );
       await blockBoss();
       return;
@@ -315,7 +368,14 @@
 
   async function handleRun() {
     if (busy) return;
+    if (!CodeEditor.getCode().trim()) {
+      showConsole('error', 'Editornya masih kosong', 'Ketik kodenya dulu, mulai dari #include <iostream>. Nyalain panduan abu-abu kalau bingung.');
+      Sound.wrong();
+      failImpact();
+      return;
+    }
     busy = true;
+    Sound.unlock();
     els.runBtn.disabled = true;
     els.runBtn.textContent = 'Menjalankan...';
     showLoading();
@@ -363,6 +423,16 @@
       els.modal.hidden = true;
       renderLevel();
     });
+
+    const paintMute = () => {
+      els.muteBtn.textContent = Sound.isMuted() ? 'Suara: mati' : 'Suara: nyala';
+      els.muteBtn.setAttribute('aria-pressed', String(Sound.isMuted()));
+    };
+    els.muteBtn.addEventListener('click', () => {
+      Sound.setMuted(!Sound.isMuted());
+      paintMute();
+    });
+    paintMute();
 
     renderLevel();
   }

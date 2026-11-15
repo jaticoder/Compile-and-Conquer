@@ -15,8 +15,8 @@ const CodeEditor = (() => {
   // Tombol simbol cepat buat HP (susah nyari simbol di keyboard biasa).
   const QUICK_KEYS = [
     ['Tab', INDENT], ['{', '{'], ['}', '}'], ['(', '('], [')', ')'], [';', ';'],
-    ['"', '"'], ['<<', ' << '], ['<', '<'], ['>', '>'], ['#', '#'],
-    ['*', '*'], ['=', ' = '], ['+', '+'], ['[', '['], [']', ']'],
+    ['"', '"'], ['<<', ' << '], ['<', '<'], ['>', '>'], ['<=', ' <= '], ['>=', ' >= '],
+    ['==', ' == '], ['++', '++'], ['#', '#'], ['*', '*'], ['=', ' = '], ['+', '+'], ['[', '['], [']', ']'],
   ];
 
   let ta = null;      // textarea
@@ -28,6 +28,8 @@ const CodeEditor = (() => {
   let ghostEnabled = true;
   let runHandler = null;
   let letTabEscape = false;
+  let errEl = null;   // pita merah di baris yang error
+  let errLine = 0;
   let dedenting = false;
 
   const compact = (text) => text.replace(/\s+/g, '');
@@ -128,17 +130,35 @@ const CodeEditor = (() => {
   function updateGutter() {
     const count = ta.value.split('\n').length;
     let nums = '';
-    for (let n = 1; n <= count; n++) nums += n + (n < count ? '\n' : '');
-    gutter.textContent = nums;
+    for (let n = 1; n <= count; n++) {
+      nums += `<span class="ln${n === errLine ? ' err' : ''}">${n}</span>`;
+    }
+    gutter.innerHTML = nums;
+  }
+
+  function lineHeight() {
+    return parseFloat(getComputedStyle(ta).lineHeight) || 22;
+  }
+
+  // Pita merah di belakang teks baris yang error.
+  function paintError() {
+    if (!errLine) { errEl.style.display = 'none'; return; }
+    const lh = lineHeight();
+    errEl.style.display = 'block';
+    errEl.style.height = lh + 'px';
+    errEl.style.top = (12 + (errLine - 1) * lh - ta.scrollTop) + 'px';
   }
 
   function syncScroll() {
     mirror.scrollTop = ta.scrollTop;
     mirror.scrollLeft = ta.scrollLeft;
     gutter.scrollTop = ta.scrollTop;
+    paintError();
   }
 
   function onChange() {
+    errLine = 0; // user mulai ngedit: tandanya hilang
+    paintError();
     updateGutter();
     refreshGhost();
   }
@@ -216,6 +236,7 @@ const CodeEditor = (() => {
       <div class="ed">
         <div class="ed-gutter" aria-hidden="true"></div>
         <div class="ed-body">
+          <div class="ed-errline" aria-hidden="true"></div>
           <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-ghost"></span></pre>
           <textarea class="ed-input" wrap="off" spellcheck="false" autocomplete="off"
             autocapitalize="off" autocorrect="off" enterkeyhint="enter"
@@ -223,6 +244,7 @@ const CodeEditor = (() => {
         </div>
       </div>`;
 
+    errEl = host.querySelector('.ed-errline');
     gutter = host.querySelector('.ed-gutter');
     mirror = host.querySelector('.ed-mirror');
     before = host.querySelector('.ed-before');
@@ -281,6 +303,19 @@ const CodeEditor = (() => {
     init,
     setCode,
     getCode: () => ta.value,
+    // Tandai baris yang error (nomor 1-based) dan gulung biar kelihatan.
+    markError(line) {
+      errLine = line;
+      updateGutter();
+      if (line) {
+        const lh = lineHeight();
+        const top = (line - 1) * lh;
+        if (top < ta.scrollTop || top > ta.scrollTop + ta.clientHeight - lh * 3) {
+          ta.scrollTop = Math.max(0, top - lh * 2);
+        }
+      }
+      syncScroll();
+    },
     setGhost(lines) {
       ghostLines = lines || [];
       refreshGhost();
