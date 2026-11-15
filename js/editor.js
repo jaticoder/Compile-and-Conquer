@@ -12,9 +12,15 @@
 
 const CodeEditor = (() => {
   const INDENT = '    ';
+  // Batas indent: 4 level. Tanpa batas, tombol Tab yang dipencet berkali-kali
+  // (apalagi ditambah Enter yang nyontek indent baris atasnya) bikin teks
+  // terdorong jauh ke kanan sampai keluar layar HP, kelihatan kayak "hilang".
+  const MAX_INDENT = INDENT.length * 4;
+
   // Tombol simbol cepat buat HP (susah nyari simbol di keyboard biasa).
+  // Isi kedua bisa teks yang disisipkan, atau fungsi buat aksi khusus.
   const QUICK_KEYS = [
-    ['Tab', INDENT], ['{', '{'], ['}', '}'], ['(', '('], [')', ')'], [';', ';'],
+    ['Tab', () => insertIndent()], ['{', '{'], ['}', '}'], ['(', '('], [')', ')'], [';', ';'],
     ['"', '"'], ['<<', ' << '], ['<', '<'], ['>', '>'], ['<=', ' <= '], ['>=', ' >= '],
     ['==', ' == '], ['++', '++'], ['#', '#'], ['*', '*'], ['=', ' = '], ['+', '+'], ['[', '['], [']', ']'],
   ];
@@ -22,6 +28,7 @@ const CodeEditor = (() => {
   let ta = null;      // textarea
   let mirror = null;  // lapisan cermin
   let before = null;  // teks sebelum kursor (transparan)
+  let caretMark = null; // penanda posisi kursor (lebar nol)
   let ghost = null;   // teks ghost
   let gutter = null;  // nomor baris
   let ghostLines = [];
@@ -88,9 +95,11 @@ const CodeEditor = (() => {
     });
   }
 
-  function hideGhost() {
-    before.textContent = '';
-    ghost.textContent = '';
+  // Isi cermin. `upToCaret` selalu diisi (walau ghost kosong) supaya posisi
+  // kursor bisa diukur lewat caretMark.
+  function paintMirror(upToCaret, ghostText) {
+    before.textContent = upToCaret;
+    ghost.textContent = ghostText;
   }
 
   function refreshGhost() {
@@ -98,20 +107,21 @@ const CodeEditor = (() => {
 
     const value = ta.value;
     const start = ta.selectionStart;
+    const upToCaret = value.slice(0, start);
+
     if (!ghostEnabled || ghostLines.length === 0 || start !== ta.selectionEnd) {
-      hideGhost();
+      paintMirror(upToCaret, '');
       return;
     }
 
     const lines = value.split('\n');
-    const upToCaret = value.slice(0, start);
     const cursorIdx = upToCaret.split('\n').length - 1;
     const lineText = lines[cursorIdx];
     const col = start - (upToCaret.lastIndexOf('\n') + 1);
 
     // Ghost cuma muncul kalau kursor di ujung baris.
     if (lineText.slice(col).trim() !== '') {
-      hideGhost();
+      paintMirror(upToCaret, '');
       return;
     }
 
@@ -136,7 +146,7 @@ const CodeEditor = (() => {
     if (!hint) {
       // Baris ini udah bener dan lengkap: ga ada yang perlu ditampilkan.
       if (complete) {
-        hideGhost();
+        paintMirror(upToCaret, '');
         return;
       }
       // Ga ada baris panduan yang cocok (salah ketik / salah tap simbol).
@@ -145,7 +155,7 @@ const CodeEditor = (() => {
       // numpuk di atas teks baris lain.
       const onLastLine = cursorIdx === lines.length - 1;
       if (!onLastLine || missing.length === 0) {
-        hideGhost();
+        paintMirror(upToCaret, '');
         return;
       }
       let best = missing[0];
@@ -157,14 +167,12 @@ const CodeEditor = (() => {
           bestLen = n;
         }
       }
-      before.textContent = upToCaret;
-      ghost.textContent = '\n' + best;
+      paintMirror(upToCaret, '\n' + best);
       syncScroll();
       return;
     }
 
-    before.textContent = upToCaret;
-    ghost.textContent = hint;
+    paintMirror(upToCaret, hint);
     syncScroll();
   }
 
@@ -197,11 +205,40 @@ const CodeEditor = (() => {
     paintError();
   }
 
+  // Pastikan kursor selalu kelihatan. Textarea biasanya ngurus ini sendiri,
+  // tapi di beberapa browser HP gulungan horizontalnya telat atau meleset
+  // setelah teks disisipkan lewat tombol simbol. Posisi kursor diukur dari
+  // penanda di lapisan cermin, lalu textarea digulung kalau perlu.
+  function revealCaret() {
+    if (ta.selectionStart !== ta.selectionEnd) return;
+
+    const lh = lineHeight();
+    const x = caretMark.offsetLeft;
+    // offsetTop dibulatkan ke awal barisnya (padding atas textarea = 12px).
+    const y = 12 + Math.floor((caretMark.offsetTop - 12) / lh) * lh;
+    const margin = 28;
+
+    if (x < ta.scrollLeft + margin) {
+      ta.scrollLeft = Math.max(0, x - margin);
+    } else if (x > ta.scrollLeft + ta.clientWidth - margin) {
+      ta.scrollLeft = x - ta.clientWidth + margin;
+    }
+
+    if (y < ta.scrollTop) {
+      ta.scrollTop = Math.max(0, y - 4);
+    } else if (y + lh > ta.scrollTop + ta.clientHeight) {
+      ta.scrollTop = y + lh - ta.clientHeight + 8;
+    }
+
+    syncScroll();
+  }
+
   function onChange() {
     errLine = 0; // user mulai ngedit: tandanya hilang
     paintError();
     updateGutter();
     refreshGhost();
+    revealCaret();
   }
 
   // Sisipkan teks di kursor. execCommand dipakai biar undo (Ctrl+Z) tetap jalan.
@@ -215,23 +252,41 @@ const CodeEditor = (() => {
     }
   }
 
+  // Panjang spasi/tab di awal baris tempat kursor berada.
+  function leadingWidth() {
+    const start = ta.selectionStart;
+    const lineStart = ta.value.lastIndexOf('\n', start - 1) + 1;
+    return (ta.value.slice(lineStart).match(/^[ \t]*/) || [''])[0].length;
+  }
+
+  // Tab: tambah satu level indent, tapi berhenti di batas MAX_INDENT.
+  function insertIndent() {
+    ta.focus();
+    if (leadingWidth() >= MAX_INDENT) return;
+    insert(INDENT);
+  }
+
   // Enter: lanjutin indent baris sebelumnya. Habis "{" tambah satu level.
   // Pakai beforeinput biar jalan juga di keyboard HP.
   function handleEnter(event) {
     const value = ta.value;
     const start = ta.selectionStart;
     const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-    const indent = (value.slice(lineStart, start).match(/^[ \t]*/) || [''])[0];
+    const rawIndent = (value.slice(lineStart, start).match(/^[ \t]*/) || [''])[0];
+    // Indent yang diwariskan dibatasi, biar ga numpuk tiap kali Enter.
+    const indent = rawIndent.slice(0, MAX_INDENT);
+    const canDeepen = indent.length + INDENT.length <= MAX_INDENT;
     const prev = value[start - 1];
     const next = value[ta.selectionEnd];
 
     event.preventDefault();
     if (prev === '{' && next === '}') {
-      insert('\n' + indent + INDENT + '\n' + indent);
-      const caret = start + 1 + indent.length + INDENT.length;
+      const inner = canDeepen ? INDENT : '';
+      insert('\n' + indent + inner + '\n' + indent);
+      const caret = start + 1 + indent.length + inner.length;
       ta.setSelectionRange(caret, caret);
     } else {
-      insert('\n' + indent + (prev === '{' ? INDENT : ''));
+      insert('\n' + indent + (prev === '{' && canDeepen ? INDENT : ''));
     }
   }
 
@@ -252,7 +307,8 @@ const CodeEditor = (() => {
 
   function buildKeys(keysEl) {
     if (!keysEl) return;
-    QUICK_KEYS.forEach(([label, text]) => {
+    QUICK_KEYS.forEach(([label, action]) => {
+      const run = typeof action === 'function' ? action : () => insert(action);
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'key';
@@ -261,11 +317,11 @@ const CodeEditor = (() => {
       // pointerdown + preventDefault: fokus (dan keyboard HP) tetap di editor.
       btn.addEventListener('pointerdown', (event) => {
         event.preventDefault();
-        insert(text);
+        run();
       });
       // Lewat keyboard (Enter/Space) event click-nya detail = 0.
       btn.addEventListener('click', (event) => {
-        if (event.detail === 0) insert(text);
+        if (event.detail === 0) run();
       });
       keysEl.appendChild(btn);
     });
@@ -278,7 +334,7 @@ const CodeEditor = (() => {
         <div class="ed-gutter" aria-hidden="true"></div>
         <div class="ed-body">
           <div class="ed-errline" aria-hidden="true"></div>
-          <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-ghost"></span></pre>
+          <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-caret" style="display:inline-block;width:0;height:1em"></span><span class="ed-ghost"></span></pre>
           <textarea class="ed-input" wrap="off" spellcheck="false" autocomplete="off"
             autocapitalize="off" autocorrect="off" enterkeyhint="enter"
             aria-label="Editor kode C++"></textarea>
@@ -289,6 +345,7 @@ const CodeEditor = (() => {
     gutter = host.querySelector('.ed-gutter');
     mirror = host.querySelector('.ed-mirror');
     before = host.querySelector('.ed-before');
+    caretMark = host.querySelector('.ed-caret');
     ghost = host.querySelector('.ed-ghost');
     ta = host.querySelector('.ed-input');
 
@@ -319,7 +376,7 @@ const CodeEditor = (() => {
       if (event.key === 'Escape') { letTabEscape = true; return; }
       if (event.key === 'Tab' && !event.shiftKey && !letTabEscape) {
         event.preventDefault();
-        insert(INDENT);
+        insertIndent();
         return;
       }
       if (event.key !== 'Tab') letTabEscape = false;

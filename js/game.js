@@ -40,6 +40,7 @@
     nextBtn: $('nextBtn'),
     modalMenuBtn: $('modalMenuBtn'),
     muteBtn: $('muteBtn'),
+    musicBtn: $('musicBtn'),
     alarm: $('alarm'),
     codeCard: document.querySelector('.code'),
     // lobby
@@ -188,6 +189,7 @@
     els.coinCount.textContent = String(levelIndex);
     resetHp();
     els.stage.className = `stage tier-${level.tier}`;
+    Sound.setMood(level.tier);
 
     setSprite(els.hero, 'assets/hero/hero.png', '🧑‍💻', 'Hero');
     setSprite(els.boss, level.boss.sprite, level.boss.emoji, level.boss.name);
@@ -628,6 +630,13 @@
     els.muteBtn.classList.toggle('off', muted);
   }
 
+  function paintMusic() {
+    const off = Sound.isMusicMuted();
+    els.musicBtn.textContent = off ? 'Mati' : 'Nyala';
+    els.musicBtn.setAttribute('aria-pressed', String(!off));
+    els.musicBtn.classList.toggle('off', off);
+  }
+
   async function showSettings(open) {
     const [hide, show] = open ? [els.lobbyMenu, els.lobbySettings] : [els.lobbySettings, els.lobbyMenu];
     hide.hidden = true;
@@ -735,11 +744,16 @@
     // Gulungan soal
     els.startBtn.addEventListener('click', hidePaper);
 
-    // Suara nyala secara default (disimpan kalau user mematikan).
+    // Musik dan efek suara nyala secara default (disimpan kalau user mematikan).
+    els.musicBtn.addEventListener('click', () => {
+      Sound.setMusicMuted(!Sound.isMusicMuted());
+      paintMusic();
+    });
     els.muteBtn.addEventListener('click', () => {
       Sound.setMuted(!Sound.isMuted());
       paintMute();
     });
+    paintMusic();
     paintMute();
     paintPlay();
 
