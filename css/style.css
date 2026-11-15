@@ -669,52 +669,55 @@ body {
 }
 
 /* ============ Responsif (HP dulu) ============ */
+/* Kunci lebar: tanpa min-width: 0, grid melebar ngikutin baris kode terpanjang. */
+html, body { max-width: 100%; overflow-x: hidden; }
+.panels > *, .code, .quest, #editor, .ed, .ed-body { min-width: 0; }
+.expected code { overflow-wrap: anywhere; }
+
 @media (max-width: 860px) {
-  body { font-size: 16px; padding-bottom: 96px; }
+  body { font-size: 16px; line-height: 1.5; }
   :root { --hero-w: 20%; --boss-w: 34%; }
 
-  .topbar { flex-direction: column; align-items: flex-start; gap: 2px; padding: 14px 16px 10px; }
-  .brand { font-size: 22px; }
-  .progress { font-size: 15px; }
+  .topbar { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 10px 16px 8px; }
+  .brand { font-size: 20px; }
+  .progress { gap: 10px; font-size: 14px; }
 
-  .game { padding: 0 14px 24px; }
-  .frame { padding: 10px 10px 0; }
-  .stage { height: clamp(210px, 34dvh, 300px); }
-  .coins { top: 10px; left: 10px; font-size: 18px; }
-  .plate { top: 10px; right: 10px; width: min(168px, 50%); padding: 6px 8px 8px; }
-  .plate-name { font-size: 15px; }
+  .game { padding: 0 16px 20px; }
+  .frame { padding: 8px 8px 0; box-shadow: 0 0 0 3px #2a1208; }
+  .stage { height: clamp(180px, 28dvh, 240px); }
+  .coins { top: 8px; left: 10px; font-size: 16px; }
+  .coin { width: 14px; height: 14px; border-width: 2px; }
+  .plate { top: 8px; right: 8px; width: min(150px, 46%); padding: 5px 8px 7px; }
+  .plate-name { margin-bottom: 4px; font-size: 14px; }
+  .hp { height: 8px; }
   .hero { left: 6%; }
   .boss { right: 5%; }
 
-  .panels { grid-template-columns: 1fr; gap: 26px; margin: 24px 4px 0; }
-  .quest { padding: 16px 16px 18px; }
-  .quest h2 { font-size: 21px; }
+  /* Satu kolom, jarak rapat. */
+  .panels { grid-template-columns: minmax(0, 1fr); gap: 18px; margin: 16px 4px 0; }
+  .quest { padding: 12px 14px 14px; }
+  .quest h2 { margin-bottom: 4px; font-size: 19px; }
+  .quest p { margin-bottom: 10px; }
+  .expected span { margin-bottom: 4px; font-size: 13px; }
+  .expected code { padding: 8px 10px; font-size: 14px; }
+  .toggle { margin-top: 10px; font-size: 14px; }
   .quest .note { display: none; }
-  .ed { font-size: 16px; line-height: 24px; } /* 16px: iOS ga zoom sendiri */
-  #editor { height: 240px; }
-  .code { padding: 12px; }
-  .shortcut { display: none; }
 
-  /* Tombol Jalankan nempel di bawah layar, selalu kejangkau jempol. */
-  .actions {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 5;
-    margin: 0;
-    padding: 14px 18px calc(14px + env(safe-area-inset-bottom, 0px));
-    flex-wrap: nowrap;
-    gap: 18px;
-    background: var(--night-2);
-    border-top: 4px solid #3a3560;
-  }
-  .actions .btn { flex: 1; min-height: 52px; padding: 8px 10px 10px; font-size: 17px; }
-  .console { scroll-margin-bottom: 110px; }
+  .code { padding: 10px; }
+  .ed { font-size: 16px; line-height: 24px; } /* 16px: iOS ga zoom sendiri */
+  #editor { height: 190px; }
+  .keys { gap: 6px; margin-top: 8px; padding: 4px 4px 6px; }
+  .key { min-width: 40px; min-height: 40px; font-size: 16px; }
+
+  /* Tombol tepat di bawah tombol simbol, ga ada jarak kosong. */
+  .actions { flex-wrap: nowrap; gap: 14px; margin: 8px 4px 0; }
+  .actions .btn { flex: 1; min-height: 48px; padding: 6px 10px 8px; font-size: 17px; }
+  .shortcut { display: none; }
+  .console { min-height: 0; margin: 18px 0 0; padding: 10px 12px; font-size: 13px; }
 }
 
 @media (max-width: 400px) {
-  .stage { height: clamp(200px, 32dvh, 260px); }
+  .stage { height: clamp(170px, 27dvh, 220px); }
   .pop { font-size: 24px; }
 }
 

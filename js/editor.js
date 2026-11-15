@@ -28,6 +28,7 @@ const CodeEditor = (() => {
   let ghostEnabled = true;
   let runHandler = null;
   let letTabEscape = false;
+  let dedenting = false;
 
   const compact = (text) => text.replace(/\s+/g, '');
 
@@ -173,6 +174,21 @@ const CodeEditor = (() => {
     }
   }
 
+  // Ketik "}" di baris yang isinya cuma spasi: mundur satu level indent.
+  function handleCloseBrace(event) {
+    const start = ta.selectionStart;
+    if (start !== ta.selectionEnd) return;
+    const lineStart = ta.value.lastIndexOf('\n', start - 1) + 1;
+    const lead = ta.value.slice(lineStart, start);
+    if (lead === '' || /\S/.test(lead)) return;
+    event.preventDefault();
+    const cut = Math.min(INDENT.length, lead.length);
+    dedenting = true;
+    ta.setSelectionRange(start - cut, start);
+    insert('}');
+    dedenting = false;
+  }
+
   function buildKeys(keysEl) {
     if (!keysEl) return;
     QUICK_KEYS.forEach(([label, text]) => {
@@ -225,6 +241,8 @@ const CodeEditor = (() => {
     ta.addEventListener('beforeinput', (event) => {
       if (event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph') {
         handleEnter(event);
+      } else if (event.inputType === 'insertText' && event.data === '}' && !dedenting) {
+        handleCloseBrace(event);
       }
     });
 
