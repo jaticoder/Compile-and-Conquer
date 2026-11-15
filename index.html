@@ -10,23 +10,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=7">
 </head>
-<body>
+<body data-view="menu">
 
-  <header class="topbar">
+  <header class="topbar" id="topbar">
     <h1 class="brand">Compile &amp; Conquer</h1>
     <p class="progress">
       <span id="hudTier">Basic</span>
       <span id="hudLevel">Level 1 dari 5</span>
     </p>
-    <button class="mute" id="muteBtn" type="button" aria-pressed="false">Suara: nyala</button>
+    <button class="menu-btn" id="menuBtn" type="button">Menu</button>
   </header>
 
   <main class="game">
 
     <!-- Arena: hero di kiri, boss di kanan. Bingkai bata mengelilingi scene. -->
-    <div class="frame">
+    <div class="frame" id="frame">
       <section class="stage tier-basic" id="stage" aria-label="Arena pertarungan">
         <div class="coins" aria-label="Boss yang sudah dikalahkan">
           <i class="coin" aria-hidden="true"></i>
@@ -49,8 +49,8 @@
 
     <section class="panels">
 
-      <!-- Soal -->
-      <article class="quest">
+      <!-- Soal. Di awal level, kartu ini tampil sebagai gulungan kertas di tengah layar. -->
+      <article class="quest" id="quest">
         <h2 id="taskTitle">Memuat level...</h2>
         <p id="taskDesc"></p>
         <div class="expected">
@@ -79,23 +79,66 @@
     </section>
   </main>
 
-  <!-- Popup kalau boss kalah -->
+  <!-- Lobby / menu utama -->
+  <div class="lobby" id="lobby">
+    <div class="sprite hero" id="lobbyHero"></div>
+    <div class="sprite boss" id="lobbyBoss"></div>
+
+    <div class="lobby-inner">
+      <div class="lobby-logo">
+        <p class="lobby-title" role="heading" aria-level="1">
+          Compile
+          <span>&amp; Conquer</span>
+        </p>
+        <p class="lobby-tag">Belajar C++ sambil ngalahin boss</p>
+      </div>
+
+      <nav class="lobby-menu" id="lobbyMenu" aria-label="Menu utama">
+        <button class="btn" id="playBtn" type="button">Main</button>
+        <button class="btn ghost" id="settingsBtn" type="button">Pengaturan</button>
+        <a class="btn ghost" id="portfolioLink" href="https://jaticoder.github.io/Portofolio/">Kembali ke Portofolio</a>
+      </nav>
+
+      <section class="lobby-settings" id="lobbySettings" aria-labelledby="settingsTitle" hidden>
+        <h2 id="settingsTitle">Pengaturan</h2>
+        <div class="setting-row">
+          <span>Suara</span>
+          <button class="btn ghost small" id="muteBtn" type="button" aria-pressed="false">Nyala</button>
+        </div>
+        <button class="btn" id="settingsBack" type="button">Kembali</button>
+      </section>
+    </div>
+  </div>
+
+  <!-- Gulungan soal: lapisan gelap + tombol Mulai -->
+  <div class="scrim" id="scrim" aria-hidden="true"></div>
+  <div class="cta" id="cta">
+    <button class="btn" id="startBtn" type="button">Mulai!</button>
+  </div>
+
+  <!-- Tirai transisi antar-layar -->
+  <div class="wipe" id="wipe" aria-hidden="true"></div>
+
   <!-- Kilat merah kalau kode salah -->
   <div class="alarm" id="alarm" aria-hidden="true"></div>
 
+  <!-- Popup: cuma muncul kalau boss terakhir kalah -->
   <div class="modal" id="modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h2 id="modalTitle">Boss kalah!</h2>
       <p id="modalText"></p>
-      <button class="btn" id="nextBtn" type="button">Level berikutnya</button>
+      <div class="modal-actions">
+        <button class="btn" id="nextBtn" type="button">Main dari awal</button>
+        <button class="btn ghost" id="modalMenuBtn" type="button">Ke menu</button>
+      </div>
     </div>
   </div>
 
-  <script src="js/levels.js?v=5"></script>
-  <script src="js/sound.js?v=5"></script>
-  <script src="js/errors.js?v=5"></script>
-  <script src="js/judge.js?v=5"></script>
-  <script src="js/editor.js?v=6"></script>
-  <script src="js/game.js?v=5"></script>
+  <script src="js/levels.js?v=7"></script>
+  <script src="js/sound.js?v=7"></script>
+  <script src="js/errors.js?v=7"></script>
+  <script src="js/judge.js?v=7"></script>
+  <script src="js/editor.js?v=7"></script>
+  <script src="js/game.js?v=7"></script>
 </body>
 </html>

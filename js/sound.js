@@ -80,6 +80,23 @@ const Sound = (() => {
       }
     },
 
+    // Klik tombol menu.
+    click() { tone({ type: 'square', from: 520, to: 780, dur: 0.07, vol: 0.07 }); },
+    // Tirai transisi menyapu layar.
+    whoosh() { burst({ dur: 0.5, from: 5000, to: 400, vol: 0.12 }); },
+    // Langkah kaki hero.
+    step() { tone({ type: 'square', from: 130, to: 70, dur: 0.05, vol: 0.05 }); },
+    // Boss mendarat.
+    land() {
+      tone({ type: 'sine', from: 150, to: 55, dur: 0.2, vol: 0.22 });
+      burst({ dur: 0.16, from: 1800, to: 200, vol: 0.1 });
+    },
+    // Gulungan kertas terbuka.
+    paper() {
+      burst({ dur: 0.28, from: 4200, to: 1200, vol: 0.08 });
+      tone({ type: 'triangle', from: 400, to: 640, dur: 0.14, vol: 0.06 });
+    },
+
     // Hero ngisi tenaga.
     charge() { tone({ type: 'sawtooth', from: 180, to: 700, dur: 0.18, vol: 0.09 }); },
     // Bola energi terbang.

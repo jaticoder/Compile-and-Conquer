@@ -846,3 +846,303 @@ html, body { max-width: 100%; overflow-x: hidden; }
 @media (max-width: 400px) {
   .pop { font-size: 16px; }
 }
+
+/* ============================================================
+   Lobby, transisi, gulungan soal (v7)
+   ============================================================ */
+
+/* ---------- Topbar lebih lega ---------- */
+.topbar { align-items: center; gap: 14px 24px; padding: 30px 20px 26px; }
+.progress { margin: 0 0 0 4px; }
+
+.menu-btn {
+  margin-left: auto;
+  min-height: 40px;
+  padding: 6px 14px 8px;
+  font-family: var(--display);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--paper);
+  background: transparent;
+  border: 0;
+  box-shadow: 0 0 0 3px #3a3560;
+  cursor: pointer;
+  transition: color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.menu-btn:hover { color: var(--coin); box-shadow: 0 0 0 3px var(--coin-dark); }
+
+/* Isi gameplay disembunyiin selagi lobby tampil. */
+body[data-view="menu"] .topbar,
+body[data-view="menu"] .game { visibility: hidden; }
+
+body.lock { overflow: hidden; }
+
+.sprite { transform-origin: 50% 100%; }
+
+/* ---------- Hero jalan ---------- */
+.hero.walking { animation: walk 0.32s steps(2, end) infinite; }
+
+@keyframes walk {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -6px, 0); }
+}
+
+/* ---------- Lobby ---------- */
+.lobby {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px 20px calc(max(14%, 36px) + 28px);
+  overflow: hidden;
+  background:
+    url('../assets/backgrounds/basic.png') center bottom / cover no-repeat,
+    url('../assets/backgrounds/basic.svg') center bottom / cover no-repeat,
+    #8dd0f0;
+  image-rendering: pixelated;
+}
+
+/* Tanah bata, sama kayak di arena. */
+.lobby::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 14%;
+  min-height: 36px;
+  background: url('../assets/ui/brick.svg') 0 0 / 32px 32px;
+  image-rendering: pixelated;
+  border-top: 4px solid #2a1208;
+  z-index: 1;
+}
+
+.lobby .sprite.hero { left: 9%; width: clamp(80px, 11vw, 170px); }
+.lobby .sprite.boss { right: 9%; width: clamp(120px, 19vw, 280px); }
+
+.lobby-inner {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.lobby-logo,
+.lobby-menu,
+.lobby-settings {
+  transition: transform 0.4s ease, opacity 0.35s ease;
+}
+
+.lobby-logo { margin-bottom: 38px; text-align: center; }
+
+.lobby-title {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(26px, 6.2vw, 54px);
+  line-height: 1.3;
+  color: var(--coin);
+  text-shadow:
+    4px 0 0 #2a1208, -4px 0 0 #2a1208, 0 4px 0 #2a1208, 0 -4px 0 #2a1208,
+    4px 4px 0 #2a1208, -4px 4px 0 #2a1208, 4px -4px 0 #2a1208, -4px -4px 0 #2a1208,
+    0 8px 0 #2a1208;
+  animation: float 3.2s ease-in-out infinite;
+}
+
+.lobby-title span { display: block; color: var(--paper); }
+
+@keyframes float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -8px, 0); }
+}
+
+.lobby-tag {
+  display: inline-block;
+  margin: 22px 0 0;
+  padding: 6px 14px;
+  background: rgba(29, 26, 46, 0.88);
+  font-size: clamp(14px, 2.4vw, 18px);
+  color: var(--paper);
+}
+
+.lobby-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: min(320px, 100%);
+}
+
+.lobby-menu .btn {
+  display: block;
+  width: 100%;
+  padding: 14px 10px 16px;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.lobby-menu #playBtn { font-size: 16px; }
+
+/* Ganti btn.ghost di atas langit: kasih latar biar kebaca. */
+.lobby .btn.ghost { background: var(--night); }
+
+.lobby-settings {
+  width: min(360px, 100%);
+  padding: 22px 22px 26px;
+  text-align: center;
+  background: var(--plank);
+  --c: var(--plank-line);
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c);
+}
+
+.lobby-settings h2 {
+  margin: 0 0 20px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--coin);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+  font-size: 17px;
+}
+
+.btn.small { padding: 8px 14px 10px; font-size: 11px; min-width: 88px; }
+.btn.ghost.small { color: var(--ok); }
+.btn.ghost.small.off { color: var(--bad); }
+
+/* Pas Main ditekan: judul naik, tombol turun. */
+.lobby.leaving .lobby-logo { transform: translateY(-50px); opacity: 0; }
+.lobby.leaving .lobby-menu { transform: translateY(50px); opacity: 0; }
+
+/* ---------- Tirai transisi ---------- */
+.wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--night-2);
+  border-right: 12px solid var(--coin);
+  box-shadow: 12px 0 0 #2a1208;
+  transform: translateX(-105%);
+  pointer-events: none;
+}
+
+/* ---------- Gulungan soal ---------- */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(10, 8, 20, 0.78);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.scrim.on { opacity: 1; pointer-events: auto; }
+
+.cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 32;
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.cta.on {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.quest {
+  position: relative;
+  transition: background-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.quest h2,
+.expected span,
+.expected code,
+.quest .note {
+  transition: color 0.5s ease, background-color 0.5s ease, border-color 0.5s ease;
+}
+
+/* Gagang gulungan di atas dan bawah kertas. */
+.quest::before,
+.quest::after {
+  content: '';
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  height: 14px;
+  background: #a8743e;
+  box-shadow: 0 -4px 0 #5a3418, 0 4px 0 #5a3418, -4px 0 0 #5a3418, 4px 0 0 #5a3418;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.quest::before { top: -18px; }
+.quest::after { bottom: -18px; }
+
+.quest.lift { z-index: 31; }
+
+.quest.paper {
+  background-color: #e9d6a4;
+  background-image: radial-gradient(rgba(90, 52, 24, 0.14) 1px, transparent 1.6px);
+  background-size: 6px 6px;
+  color: #3a2412;
+  --c: #6b3d18;
+}
+
+.quest.paper::before,
+.quest.paper::after { opacity: 1; }
+
+.quest.paper h2 { color: #8a2f0e; }
+.quest.paper .expected span,
+.quest.paper .note { color: #7a5a36; }
+.quest.paper .expected code { background: #d2bb84; border-left-color: #8a2f0e; color: #3a2412; }
+.quest.paper .note code { color: #3a2412; }
+
+/* ---------- Popup akhir ---------- */
+.modal-actions { display: flex; flex-direction: column; gap: 22px; align-items: center; }
+
+/* ---------- HP ---------- */
+@media (max-width: 860px) {
+  .topbar { padding: 18px 16px 16px; gap: 10px 12px; }
+  .menu-btn { min-height: 36px; padding: 4px 10px 6px; font-size: 9px; }
+
+  .lobby { padding: 20px 16px calc(max(14%, 36px) + 96px); }
+  .lobby-logo { margin-bottom: 28px; }
+  .lobby-menu { gap: 22px; width: min(280px, 100%); }
+  .lobby-menu .btn { padding: 12px 8px 14px; font-size: 11px; }
+  .lobby-menu #playBtn { font-size: 14px; }
+  .lobby .sprite.hero { left: 6%; width: 64px; }
+  .lobby .sprite.boss { right: 6%; width: 96px; }
+}
+
+@media (max-height: 560px) {
+  .lobby { padding-bottom: calc(max(14%, 36px) + 16px); }
+  .lobby .sprite { display: none; }
+  .lobby-logo { margin-bottom: 18px; }
+  .lobby-tag { margin-top: 12px; }
+  .lobby-menu { gap: 18px; }
+}
