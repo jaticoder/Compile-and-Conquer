@@ -1146,3 +1146,48 @@ body.lock { overflow: hidden; }
   .lobby-tag { margin-top: 12px; }
   .lobby-menu { gap: 18px; }
 }
+
+/* ============================================================
+   Animasi masuk lobby pas halaman dibuka / di-refresh (kelas .boot)
+   Murni CSS, jadi jalan walau JS telat. Urutan: hero jalan masuk,
+   judul jatuh, tombol naik satu-satu, boss muncul.
+   ============================================================ */
+.lobby.boot .lobby-logo { animation: drop-in 0.8s 0.2s cubic-bezier(0.3, 1.3, 0.5, 1) backwards; }
+
+@keyframes drop-in {
+  from { opacity: 0; transform: translateY(-70px); }
+  to { opacity: 1; transform: none; }
+}
+
+.lobby.boot .lobby-menu > * { animation: rise-in 0.5s ease-out backwards; }
+.lobby.boot .lobby-menu > :nth-child(1) { animation-delay: 0.55s; }
+.lobby.boot .lobby-menu > :nth-child(2) { animation-delay: 0.7s; }
+.lobby.boot .lobby-menu > :nth-child(3) { animation-delay: 0.85s; }
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: none; }
+}
+
+.lobby.boot .sprite.hero {
+  animation:
+    bob 2.6s cubic-bezier(0.37, 0, 0.63, 1) -1.2s infinite,
+    lobby-hero-in 1s 0.1s ease-out backwards;
+}
+
+@keyframes lobby-hero-in {
+  from { translate: -45vw 0; }
+  to { translate: 0 0; }
+}
+
+.lobby.boot .sprite.boss {
+  animation:
+    bob 2.6s cubic-bezier(0.37, 0, 0.63, 1) infinite,
+    lobby-boss-in 0.7s 0.45s ease-out backwards;
+}
+
+@keyframes lobby-boss-in {
+  from { opacity: 0; scale: 0.2; translate: 0 -40px; }
+  60% { opacity: 1; scale: 1.12; translate: 0 4px; }
+  to { opacity: 1; scale: 1; translate: 0 0; }
+}

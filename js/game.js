@@ -656,6 +656,7 @@
     transitioning = true;
     Sound.unlock();
 
+    els.lobby.classList.remove('boot');
     els.lobby.classList.add('leaving');
     restartClass(els.lobbyHero, 'attack');
     await wait(reduceMotion ? 0 : 380);
@@ -741,6 +742,10 @@
     });
     paintMute();
     paintPlay();
+
+    // Animasi masuk lobby (CSS, kelas .boot). Dilepas setelah selesai biar
+    // ga ke-replay tiap balik ke menu.
+    setTimeout(() => els.lobby.classList.remove('boot'), 2500);
 
     // Siapin level di belakang lobby biar gambar sprite udah ke-load pas Main ditekan.
     renderLevel(false);
