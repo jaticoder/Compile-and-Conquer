@@ -412,6 +412,30 @@ const Sound = (() => {
       tone({ type: 'triangle', from: 400, to: 640, dur: 0.14, vol: 0.06 });
     },
 
+    // Gulungan materi terbuka: kertas + ting naik yang hangat.
+    lessonOpen() {
+      burst({ dur: 0.3, from: 4200, to: 1200, vol: 0.08 });
+      [523, 659, 784].forEach((f, i) =>
+        tone({ type: 'triangle', from: f, to: f, start: 0.05 + i * 0.07, dur: 0.16, vol: 0.09 })
+      );
+    },
+    // Ganti slide: kertas dibalik. `back` = mundur (nadanya turun).
+    page(back) {
+      burst({ dur: 0.12, from: 5200, to: 1800, vol: 0.07 });
+      tone({ type: 'triangle', from: back ? 520 : 400, to: back ? 380 : 600, dur: 0.09, vol: 0.06 });
+    },
+    // Ketuk bagian kode di materi: blip kecil.
+    tip() {
+      tone({ type: 'square', from: 880, to: 1320, dur: 0.06, vol: 0.05 });
+      tone({ type: 'triangle', from: 1320, to: 1320, start: 0.05, dur: 0.08, vol: 0.05 });
+    },
+    // Materi selesai: fanfare pendek.
+    lessonDone() {
+      [523, 659, 784, 1047].forEach((f, i) =>
+        tone({ type: 'square', from: f, to: f, start: i * 0.07, dur: 0.12, vol: 0.07 })
+      );
+    },
+
     // ----- Efek ngetik -----
     // Tik pendek, nadanya acak sedikit biar ga monoton. Dibatasi biar ga numpuk.
     type() {

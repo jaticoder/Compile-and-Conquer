@@ -55,6 +55,7 @@
     settingsBtn: $('settingsBtn'),
     settingsBack: $('settingsBack'),
     menuBtn: $('menuBtn'),
+    lessonBtn: $('lessonBtn'),
     // transisi
     wipe: $('wipe'),
     scrim: $('scrim'),
@@ -428,12 +429,35 @@
     }
   }
 
-  // Tirai kebuka, hero jalan masuk, boss muncul, gulungan soal tampil.
+  // ---------- Materi ----------
+
+  // Materi level ini yang belum pernah dibaca (Level 1 diawali materi dasar).
+  // Dibuka otomatis sekali; sesudahnya bisa dibuka lagi lewat tombol Materi.
+  async function showLessonIfNew() {
+    // Materi selalu muncul di awal level. Level 1 selalu diawali 'dasar'
+    // (kenapa ada #include, main, dst.), baru materi konsep level itu.
+    const ids = lessonIdsForLevel(levelIndex, true);
+    if (!ids.length) return;
+    await wait(reduceMotion ? 0 : 200);
+    await Lesson.open(ids);
+  }
+
+  async function openLessonManually() {
+    if (busy || transitioning) return;
+    transitioning = true;
+    setMixer(false);
+    await Lesson.open(lessonIdsForLevel(levelIndex, true));
+    transitioning = false;
+    els.lessonBtn.focus({ preventScroll: true });
+  }
+
+  // Tirai kebuka, hero jalan masuk, boss muncul, materi (kalau baru), gulungan soal tampil.
   async function enterLevel() {
     const opening = reveal();
     await wait(reduceMotion ? 0 : 180);
     await Promise.all([opening, walkIn()]);
     await bossPop();
+    await showLessonIfNew();
     await showPaper();
   }
 
@@ -809,6 +833,7 @@
     els.settingsBtn.addEventListener('click', () => { Sound.click(); showSettings(true); });
     els.settingsBack.addEventListener('click', () => { Sound.click(); showSettings(false); });
     els.menuBtn.addEventListener('click', () => { Sound.click(); openLobby(); });
+    els.lessonBtn.addEventListener('click', () => { Sound.click(); openLessonManually(); });
     document.getElementById('portfolioLink').addEventListener('click', () => Sound.click());
 
     // Gulungan soal

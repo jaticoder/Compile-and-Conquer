@@ -18,6 +18,7 @@
   --bad: #ff7b7b;
   --display: 'Pixelify Sans', ui-monospace, monospace;
   --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --read: 'VT323', 'Atkinson Hyperlegible', ui-monospace, monospace;
   --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
 }
 
@@ -1389,3 +1390,222 @@ body.lock { overflow: hidden; }
 
 /* Ghost yang kepanjangan dipatahkan ke baris bawahnya (v14). */
 .ed-ghost.wrap { display: inline-block; vertical-align: top; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+
+/* ============================================================
+   Font teks game (v15)
+   Teks soal, popup, dan menu tadinya pakai Atkinson Hyperlegible: font
+   modern yang bersih, jadi kelihatan "nempel" di atas gulungan kertas dan
+   papan kayu bergaya pixel. Diganti Pixelify Sans: tetap jelas dibaca
+   sebagai paragraf, tapi satu keluarga sama judul pixel dan sprite-nya.
+   Editor, konsol, dan blok kode tetap monospace (JetBrains Mono).
+   ============================================================ */
+:root { --text: 'Pixelify Sans', 'Atkinson Hyperlegible', system-ui, sans-serif; }
+
+.quest p,
+.expected span,
+.toggle,
+.quest .note,
+.modal-card p,
+.lobby-tag,
+.setting-row,
+.setting-note,
+.vol-label { font-family: var(--text); }
+
+.quest p { font-size: 19px; line-height: 1.55; }
+.quest .note { font-size: 16px; }
+.expected span, .toggle { font-size: 17px; }
+.modal-card p { font-size: 18px; }
+.setting-row { font-size: 18px; }
+
+@media (max-width: 860px) {
+  .quest p { font-size: 17px; line-height: 1.5; }
+  .quest .note { font-size: 14px; }
+  .expected span, .toggle { font-size: 15px; }
+  .modal-card p { font-size: 16px; }
+  .setting-row { font-size: 16px; }
+}
+
+
+/* ============================================================
+   Gulungan materi (v16)
+   Popup slide ala kertas dungeon. Warna ngikutin gulungan soal
+   (.quest.paper) biar kerasa satu keluarga.
+   ============================================================ */
+#lessonBtn { margin-left: auto; }
+#volBtn { margin-left: 0; }
+
+body.lesson-open { overflow: hidden; }
+
+.lesson {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(10, 8, 20, 0.82);
+}
+
+.lesson-card {
+  display: flex;
+  flex-direction: column;
+  width: min(580px, 100%);
+  max-height: min(86vh, 720px);
+  padding: 20px 22px 22px;
+  color: #3a2412;
+  background-color: #e9d6a4;
+  background-image: radial-gradient(rgba(90, 52, 24, 0.14) 1px, transparent 1.6px);
+  background-size: 6px 6px;
+  --c: #6b3d18;
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c),
+    0 10px 0 0 #2a1208;
+}
+
+.lesson-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+
+.mentor {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  background: #d2bb84;
+  box-shadow: 0 0 0 3px #6b3d18;
+  overflow: hidden;
+}
+.mentor img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.mentor .fallback { font-size: 34px; line-height: 1; }
+
+.lesson-titles { min-width: 0; }
+.lesson-kicker { margin: 0 0 4px; font-family: var(--text); font-size: 15px; color: #7a5a36; }
+.lesson-card h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #8a2f0e;
+}
+
+.lesson-body { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 4px 6px 0; }
+.ltext { margin: 0 0 12px; font-family: var(--text); font-size: 19px; line-height: 1.5; }
+
+.lcode {
+  margin: 4px 0 10px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.75;
+  color: #3a2412;
+  background: #d2bb84;
+  border-left: 4px solid #8a2f0e;
+  white-space: pre;
+}
+
+.tok {
+  display: inline;
+  padding: 0 1px;
+  margin: 0;
+  font: inherit;
+  font-variant-ligatures: none;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px dashed #8a2f0e;
+  border-radius: 0;
+  cursor: pointer;
+}
+.tok:hover { background: rgba(138, 47, 14, 0.16); }
+.tok.on { background: #8a2f0e; color: #f3e6c9; border-bottom-color: #8a2f0e; }
+.lesson-card :focus-visible { outline-color: #8a2f0e; }
+
+.lnote {
+  margin: 0 0 10px;
+  min-height: 3.2em;
+  padding: 10px 12px;
+  font-family: var(--text);
+  font-size: 18px;
+  line-height: 1.45;
+  color: #3a2412;
+  background: rgba(243, 230, 201, 0.7);
+  box-shadow: 0 0 0 2px #a8743e;
+}
+
+.ltip { margin: 0 0 6px; font-family: var(--text); font-size: 17px; line-height: 1.45; color: #7a5a36; }
+.ltip::before { content: 'Catatan: '; font-weight: 700; color: #8a2f0e; }
+
+.lesson-dots { display: flex; justify-content: center; gap: 8px; margin: 12px 0 14px; }
+.lesson-dots .dot { width: 10px; height: 10px; background: #b99a5e; }
+.lesson-dots .dot.on { background: #8a2f0e; }
+
+.lesson-actions { display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; }
+.lesson .btn.ghost.small { color: #3a2412; background: transparent; box-shadow: 0 0 0 3px #6b3d18; }
+.lesson .btn.ghost.small:hover { color: #8a2f0e; }
+.lesson-skip {
+  margin-left: auto;
+  padding: 4px 2px;
+  font-family: var(--text);
+  font-size: 16px;
+  color: #7a5a36;
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.lesson-skip:hover { color: #8a2f0e; }
+
+@media (max-width: 860px) {
+  .lesson { padding: 12px; }
+  .lesson-card { padding: 16px 14px 18px; max-height: 90vh; }
+  .mentor { width: 48px; height: 48px; }
+  .lesson-card h2 { font-size: 11px; }
+  .lesson-kicker { font-size: 14px; }
+  .ltext { font-size: 17px; }
+  .lcode { font-size: 13px; padding: 10px; }
+  .lnote { font-size: 16px; }
+  .ltip { font-size: 15px; }
+  .lesson-actions { gap: 14px; }
+}
+
+
+/* ============================================================
+   Materi: font bacaan (v18)
+   Pixelify Sans kepanjangan buat paragraf, Atkinson kebacaan tapi ga nyatu
+   sama tema. VT323: font pixel bergaya terminal, hurufnya tinggi dan jarak
+   antar hurufnya lega, jadi tetap enak dibaca. Ukurannya dibesarin karena
+   VT323 kecil secara visual. Judul tetap Pixelify Sans.
+   ============================================================ */
+.ltext, .lnote, .ltip, .lesson-kicker { font-family: var(--read); }
+.lesson-skip { font-family: var(--body); }
+.ltext { font-size: 23px; line-height: 1.35; margin: 0 0 12px; }
+.lnote { font-size: 22px; line-height: 1.35; }
+.ltip { font-size: 21px; line-height: 1.3; }
+.lesson-kicker { font-size: 19px; font-weight: 400; letter-spacing: 0.02em; }
+
+@media (max-width: 860px) {
+  .ltext { font-size: 21px; }
+  .lnote { font-size: 20px; }
+  .ltip { font-size: 19px; }
+  .lesson-kicker { font-size: 17px; }
+}
+
+/* Potongan kode di teks materi: kotak gelap + teks emas, jelas beda dari kertas. */
+.ic {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 0 6px 1px;
+  font-family: var(--mono);
+  font-size: 0.74em;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: #ffd166;
+  background: #3a2412;
+  box-shadow: 0 0 0 2px #6b3d18;
+}

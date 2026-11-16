@@ -9,8 +9,8 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=14">
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=20">
 </head>
 <body data-view="menu">
 
@@ -20,6 +20,7 @@
       <span id="hudTier">Basic</span>
       <span id="hudLevel">Level 1 dari 5</span>
     </p>
+    <button class="menu-btn" id="lessonBtn" type="button">Materi</button>
     <button class="menu-btn" id="volBtn" type="button" aria-expanded="false" aria-controls="mixer">Suara</button>
     <button class="menu-btn" id="menuBtn" type="button">Menu</button>
 
@@ -162,6 +163,26 @@
   <!-- Kilat merah kalau kode salah -->
   <div class="alarm" id="alarm" aria-hidden="true"></div>
 
+  <!-- Gulungan materi: slide penjelasan sebelum soal tiap boss -->
+  <div class="lesson" id="lesson" hidden>
+    <div class="lesson-card" id="lessonCard" role="dialog" aria-modal="true" aria-labelledby="lessonTitle">
+      <header class="lesson-head">
+        <div class="mentor" id="mentor"></div>
+        <div class="lesson-titles">
+          <p class="lesson-kicker" id="lessonKicker"></p>
+          <h2 id="lessonTitle"></h2>
+        </div>
+      </header>
+      <div class="lesson-body" id="lessonBody"></div>
+      <div class="lesson-dots" id="lessonDots" role="img"></div>
+      <div class="lesson-actions">
+        <button class="btn ghost small" id="lessonPrev" type="button">Kembali</button>
+        <button class="btn small" id="lessonNext" type="button">Lanjut</button>
+        <button class="lesson-skip" id="lessonSkip" type="button">Lewati</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Popup: cuma muncul kalau boss terakhir kalah -->
   <div class="modal" id="modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -175,10 +196,12 @@
   </div>
 
   <script src="js/levels.js?v=14"></script>
-  <script src="js/sound.js?v=14"></script>
+  <script src="js/lessons.js?v=20"></script>
+  <script src="js/lesson.js?v=20"></script>
+  <script src="js/sound.js?v=17"></script>
   <script src="js/errors.js?v=14"></script>
   <script src="js/judge.js?v=14"></script>
   <script src="js/editor.js?v=14"></script>
-  <script src="js/game.js?v=14"></script>
+  <script src="js/game.js?v=19"></script>
 </body>
 </html>
