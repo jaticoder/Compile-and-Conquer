@@ -35,6 +35,8 @@ const CodeEditor = (() => {
   let hintDone = null;
   let hintNext = null;
   let hintShown = false;
+  let stack = null;   // pembungkus lapisan teks (digeser kalau ghost butuh ruang)
+  let shift = 0;      // geseran ke kiri (px)
   let gutter = null;  // nomor baris
   let ghostLines = [];
   let ghostEnabled = true;
@@ -145,27 +147,62 @@ const CodeEditor = (() => {
     edEl.style.setProperty('--hint-h', '0px');
   }
 
-  // Tampilkan panduan di kursor. Inline kalau muat, kalau ga pindah ke strip.
+  // Geser seluruh lapisan teks ke kiri biar ghost di ujung kanan kebagian tempat.
+  // (Textarea ga bisa digulung melewati teksnya sendiri, jadi ini triknya.)
+  function setShift(px) {
+    px = Math.max(0, Math.round(px));
+    if (px === shift) return;
+    shift = px;
+    stack.style.setProperty('--shift', px + 'px');
+    stack.style.transform = px ? `translateX(${-px}px)` : '';
+  }
+
+  // Tampilkan panduan di kursor.
+  //   1. Muat inline: tampil apa adanya.
+  //   2. Kurang sedikit: lapisan teks digeser ke kiri (selama kursor tetap kelihatan).
+  //   3. Tetap ga muat: pindah ke strip "Lanjutan" di dasar editor.
   //   full      = baris panduan lengkap
   //   rest      = sisa yang belum diketik (kalau lanjut di baris yang sama)
   //   onNewLine = true kalau panduan ditaruh di baris bawah (user salah ketik)
   function placeHint(upToCaret, full, rest, onNewLine, stripRest) {
     paintMirror(upToCaret, onNewLine ? '\n' + full : rest);
     const w = charWidth();
-    const room = ta.clientWidth - 16;
-    const fits = onNewLine
-      ? ta.scrollLeft === 0 && full.length * w + 4 <= room
-      : caretMark.offsetLeft - ta.scrollLeft + rest.length * w <= room;
+    const room = ta.clientWidth - 6;
+    let fits;
+    let dx = 0;
+
+    if (onNewLine) {
+      fits = ta.scrollLeft === 0 && full.length * w + 4 <= room;
+    } else {
+      const caretX = caretMark.offsetLeft - ta.scrollLeft;
+      const overflow = caretX + rest.length * w - room;
+      if (overflow <= 0) {
+        fits = true;
+      } else if (caretX - 14 >= overflow) { // kursor tetap kelihatan setelah digeser
+        fits = true;
+        dx = overflow;
+      } else {
+        fits = false;
+      }
+    }
 
     if (fits) {
+      setShift(dx);
       hideHint();
       syncScroll();
-      return;
+      return true;
     }
+    // Panduan buat salah ketik cuma referensi: kalau ga muat, ga usah bikin strip.
+    if (onNewLine) return false;
+    setShift(0);
     paintMirror(upToCaret, '');
-    showHint(full, onNewLine ? full : stripRest);
+    showHint(full, stripRest);
     syncScroll();
+    return true;
   }
+
+  // Berapa kolom kosong yang disisakan di kanan kursor waktu belum ada ghost.
+  const RESERVE_COLS = 4;
 
   function refreshGhost() {
     if (!ta) return;
@@ -173,20 +210,30 @@ const CodeEditor = (() => {
     const value = ta.value;
     const start = ta.selectionStart;
     const upToCaret = value.slice(0, start);
-    const none = () => { paintMirror(upToCaret, ''); hideHint(); };
+    const lines = value.split('\n');
+    const cursorIdx = upToCaret.split('\n').length - 1;
+    const lineText = lines[cursorIdx];
+    const col = start - (upToCaret.lastIndexOf('\n') + 1);
+    const atEnd = lineText.slice(col).trim() === '' && start === ta.selectionEnd;
+
+    // Tanpa ghost: tetap sisakan ruang kosong di kanan kursor (kayak "scroll beyond
+    // last column" di VS Code), biar kursor ga nempel di tepi kotak editor.
+    const none = () => {
+      paintMirror(upToCaret, '');
+      hideHint();
+      if (!atEnd) { setShift(0); return; }
+      const caretX = caretMark.offsetLeft - ta.scrollLeft;
+      const overflow = caretX + RESERVE_COLS * charWidth() - (ta.clientWidth - 6);
+      setShift(overflow > 0 ? Math.min(overflow, Math.max(0, caretX - 14)) : 0);
+    };
 
     if (!ghostEnabled || ghostLines.length === 0 || start !== ta.selectionEnd) {
       none();
       return;
     }
 
-    const lines = value.split('\n');
-    const cursorIdx = upToCaret.split('\n').length - 1;
-    const lineText = lines[cursorIdx];
-    const col = start - (upToCaret.lastIndexOf('\n') + 1);
-
     // Ghost cuma muncul kalau kursor di ujung baris.
-    if (lineText.slice(col).trim() !== '') {
+    if (!atEnd) {
       none();
       return;
     }
@@ -242,7 +289,7 @@ const CodeEditor = (() => {
         bestLen = n;
       }
     }
-    placeHint(upToCaret, best, '', true, '');
+    if (!placeHint(upToCaret, best, '', true, '')) none();
   }
 
   function updateGutter() {
@@ -309,7 +356,7 @@ const CodeEditor = (() => {
   // Posisi kursor relatif ke area teks (diukur dari penanda di lapisan cermin).
   function caretXY() {
     return {
-      x: caretMark.offsetLeft - ta.scrollLeft,
+      x: caretMark.offsetLeft - ta.scrollLeft - shift,
       y: caretMark.offsetTop - ta.scrollTop + caretMark.offsetHeight / 2,
     };
   }
@@ -522,11 +569,13 @@ const CodeEditor = (() => {
       <div class="ed">
         <div class="ed-gutter" aria-hidden="true"></div>
         <div class="ed-body">
+         <div class="ed-stack">
           <div class="ed-errline" aria-hidden="true"></div>
           <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-caret" style="display:inline-block;width:0;height:1em"></span><span class="ed-ghost"></span><span class="ed-meas">MMMMMMMMMM</span></pre>
           <textarea class="ed-input" wrap="off" spellcheck="false" autocomplete="off"
             autocapitalize="off" autocorrect="off" enterkeyhint="enter"
             aria-label="Editor kode C++"></textarea>
+         </div>
           <div class="ed-fx" aria-hidden="true"></div>
           <div class="ed-combo" aria-hidden="true"></div>
           <div class="ed-hint" aria-hidden="true" hidden><span class="ed-hint-label">Lanjutan</span><code><span class="hd"></span><span class="hn"></span></code></div>
@@ -536,6 +585,7 @@ const CodeEditor = (() => {
     edEl = host.querySelector('.ed');
     fxLayer = host.querySelector('.ed-fx');
     comboEl = host.querySelector('.ed-combo');
+    stack = host.querySelector('.ed-stack');
     errEl = host.querySelector('.ed-errline');
     gutter = host.querySelector('.ed-gutter');
     mirror = host.querySelector('.ed-mirror');

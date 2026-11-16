@@ -1373,3 +1373,16 @@ body.lock { overflow: hidden; }
 }
 
 .ed-hint .hn { color: var(--coin); font-weight: 600; }
+
+
+/* ---------- Geser lapisan teks (v12) ---------- */
+.ed-body { overflow: hidden; }
+.ed-stack { position: absolute; inset: 0; --shift: 0px; transition: transform 0.12s ease-out; }
+/* Lapisan cermin dan pita error melebar ke kanan sebesar geseran, biar ga ada celah. */
+.ed-mirror, .ed-errline { right: calc(var(--shift) * -1); }
+
+/* Strip "Lanjutan" dibuat tipis: cuma satu-dua baris, tanpa judul. */
+.ed-hint { padding: 5px 10px 6px; border-top-width: 2px; }
+.ed-hint-label { display: none; }
+.ed-hint code { font-size: 13px; line-height: 1.35; }
+.ed-hint code::before { content: '\2192  '; color: var(--coin-dark); }
