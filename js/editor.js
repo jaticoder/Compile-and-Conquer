@@ -37,6 +37,7 @@ const CodeEditor = (() => {
   let hintShown = false;
   let stack = null;   // pembungkus lapisan teks (digeser kalau ghost butuh ruang)
   let shift = 0;      // geseran ke kiri (px)
+  let ghostRows = 1;  // jumlah baris yang dipakai ghost (>1 kalau dipatahkan)
   let gutter = null;  // nomor baris
   let ghostLines = [];
   let ghostEnabled = true;
@@ -124,6 +125,9 @@ const CodeEditor = (() => {
   function paintMirror(upToCaret, ghostText) {
     before.textContent = upToCaret;
     ghost.textContent = ghostText;
+    ghost.classList.remove('wrap');
+    ghost.style.width = '';
+    ghostRows = 1;
   }
 
   // Lebar satu huruf (font monospace), diukur dari penanda di lapisan cermin.
@@ -157,19 +161,22 @@ const CodeEditor = (() => {
     stack.style.transform = px ? `translateX(${-px}px)` : '';
   }
 
-  // Tampilkan panduan di kursor.
+  // Tampilkan panduan di kursor. Urutan usaha, dari yang paling rapi:
   //   1. Muat inline: tampil apa adanya.
   //   2. Kurang sedikit: lapisan teks digeser ke kiri (selama kursor tetap kelihatan).
-  //   3. Tetap ga muat: pindah ke strip "Lanjutan" di dasar editor.
+  //   3. Masih kepanjangan: ghost dipatahkan ke baris di bawahnya, tetap abu-abu
+  //      inline (cuma kalau kursor di baris terakhir, biar ga numpuk teks lain).
+  //   4. Terakhir: strip "Lanjutan" di dasar editor.
   //   full      = baris panduan lengkap
   //   rest      = sisa yang belum diketik (kalau lanjut di baris yang sama)
   //   onNewLine = true kalau panduan ditaruh di baris bawah (user salah ketik)
-  function placeHint(upToCaret, full, rest, onNewLine, stripRest) {
+  function placeHint(upToCaret, full, rest, onNewLine, stripRest, canWrap) {
     paintMirror(upToCaret, onNewLine ? '\n' + full : rest);
     const w = charWidth();
     const room = ta.clientWidth - 6;
     let fits;
     let dx = 0;
+    let wrapWidth = 0;
 
     if (onNewLine) {
       fits = ta.scrollLeft === 0 && full.length * w + 4 <= room;
@@ -181,6 +188,11 @@ const CodeEditor = (() => {
       } else if (caretX - 14 >= overflow) { // kursor tetap kelihatan setelah digeser
         fits = true;
         dx = overflow;
+      } else if (canWrap) {
+        // Geser secukupnya biar ada ruang minimal ~16 kolom, sisanya dipatahkan.
+        fits = true;
+        dx = Math.max(0, Math.min(caretX - 14, caretX + Math.min(rest.length, 16) * w - room));
+        wrapWidth = room - (caretX - dx);
       } else {
         fits = false;
       }
@@ -188,6 +200,11 @@ const CodeEditor = (() => {
 
     if (fits) {
       setShift(dx);
+      if (wrapWidth) {
+        ghost.classList.add('wrap');
+        ghost.style.width = wrapWidth + 'px';
+        ghostRows = Math.max(1, Math.round(ghost.offsetHeight / lineHeight()));
+      }
       hideHint();
       syncScroll();
       return true;
@@ -263,7 +280,7 @@ const CodeEditor = (() => {
 
     if (match) {
       // `full` buat strip: bagian yang udah diketik dibuat redup, sisanya terang.
-      placeHint(upToCaret, match, rest, false, restRaw);
+      placeHint(upToCaret, match, rest, false, restRaw, cursorIdx === lines.length - 1);
       return;
     }
 
@@ -289,7 +306,7 @@ const CodeEditor = (() => {
         bestLen = n;
       }
     }
-    if (!placeHint(upToCaret, best, '', true, '')) none();
+    if (!placeHint(upToCaret, best, '', true, '', false)) none();
   }
 
   function updateGutter() {
@@ -341,7 +358,7 @@ const CodeEditor = (() => {
     }
 
     // Strip "Lanjutan" nutupin dasar editor: baris kursor harus di atasnya.
-    const hintH = hintShown ? hintEl.offsetHeight : 0;
+    const hintH = (hintShown ? hintEl.offsetHeight : 0) + (ghostRows - 1) * lh;
     if (y < ta.scrollTop) {
       ta.scrollTop = Math.max(0, y - 4);
     } else if (y + lh > ta.scrollTop + ta.clientHeight - hintH) {

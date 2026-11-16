@@ -1386,3 +1386,6 @@ body.lock { overflow: hidden; }
 .ed-hint-label { display: none; }
 .ed-hint code { font-size: 13px; line-height: 1.35; }
 .ed-hint code::before { content: '\2192  '; color: var(--coin-dark); }
+
+/* Ghost yang kepanjangan dipatahkan ke baris bawahnya (v14). */
+.ed-ghost.wrap { display: inline-block; vertical-align: top; white-space: pre-wrap; overflow-wrap: anywhere; }
