@@ -1329,3 +1329,47 @@ body.lock { overflow: hidden; }
   .mixer { right: 16px; }
   .ed-combo { top: 6px; right: 8px; font-size: 9px; padding: 4px 7px 5px; }
 }
+
+
+/* ============================================================
+   Strip "Lanjutan" (v11): cadangan kalau ghost text kepotong di tepi editor
+   ============================================================ */
+.ed-meas { position: absolute; visibility: hidden; pointer-events: none; white-space: pre; }
+
+/* Ruang ekstra di dasar teks selagi strip tampil, biar baris terakhir bisa digulung ke atasnya. */
+.ed-input, .ed-mirror { padding-bottom: calc(12px + var(--hint-h, 0px)); }
+
+.ed-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  padding: 6px 12px 8px;
+  background: #1b1830;
+  border-top: 3px solid var(--coin-dark);
+  pointer-events: none;
+}
+
+.ed-hint[hidden] { display: none; }
+
+.ed-hint-label {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--body);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ed-hint code {
+  display: block;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #8a85b0;
+}
+
+.ed-hint .hn { color: var(--coin); font-weight: 600; }

@@ -30,6 +30,11 @@ const CodeEditor = (() => {
   let before = null;  // teks sebelum kursor (transparan)
   let caretMark = null; // penanda posisi kursor (lebar nol)
   let ghost = null;   // teks ghost
+  let measEl = null;  // penanda ukur lebar 1 huruf
+  let hintEl = null;  // strip "Lanjutan" di bawah editor (cadangan kalau ghost kepotong)
+  let hintDone = null;
+  let hintNext = null;
+  let hintShown = false;
   let gutter = null;  // nomor baris
   let ghostLines = [];
   let ghostEnabled = true;
@@ -119,15 +124,59 @@ const CodeEditor = (() => {
     ghost.textContent = ghostText;
   }
 
+  // Lebar satu huruf (font monospace), diukur dari penanda di lapisan cermin.
+  const charWidth = () => measEl.offsetWidth / 10;
+
+  // Strip "Lanjutan": dipakai kalau ghost inline ga muat (kursor udah mepet
+  // tepi kanan, atau awal baris kegulung keluar layar). Ghost inline itu teks
+  // di luar textarea, jadi ga bisa digulung ke dalam. Strip ini selalu kelihatan.
+  function showHint(full, next) {
+    hintDone.textContent = full.slice(0, full.length - next.length);
+    hintNext.textContent = next;
+    hintEl.hidden = false;
+    hintShown = true;
+    edEl.style.setProperty('--hint-h', hintEl.offsetHeight + 'px');
+  }
+
+  function hideHint() {
+    if (!hintShown) return;
+    hintEl.hidden = true;
+    hintShown = false;
+    edEl.style.setProperty('--hint-h', '0px');
+  }
+
+  // Tampilkan panduan di kursor. Inline kalau muat, kalau ga pindah ke strip.
+  //   full      = baris panduan lengkap
+  //   rest      = sisa yang belum diketik (kalau lanjut di baris yang sama)
+  //   onNewLine = true kalau panduan ditaruh di baris bawah (user salah ketik)
+  function placeHint(upToCaret, full, rest, onNewLine, stripRest) {
+    paintMirror(upToCaret, onNewLine ? '\n' + full : rest);
+    const w = charWidth();
+    const room = ta.clientWidth - 16;
+    const fits = onNewLine
+      ? ta.scrollLeft === 0 && full.length * w + 4 <= room
+      : caretMark.offsetLeft - ta.scrollLeft + rest.length * w <= room;
+
+    if (fits) {
+      hideHint();
+      syncScroll();
+      return;
+    }
+    paintMirror(upToCaret, '');
+    showHint(full, onNewLine ? full : stripRest);
+    syncScroll();
+  }
+
   function refreshGhost() {
     if (!ta) return;
 
     const value = ta.value;
     const start = ta.selectionStart;
     const upToCaret = value.slice(0, start);
+    const none = () => { paintMirror(upToCaret, ''); hideHint(); };
 
     if (!ghostEnabled || ghostLines.length === 0 || start !== ta.selectionEnd) {
-      paintMirror(upToCaret, '');
+      none();
       return;
     }
 
@@ -138,7 +187,7 @@ const CodeEditor = (() => {
 
     // Ghost cuma muncul kalau kursor di ujung baris.
     if (lineText.slice(col).trim() !== '') {
-      paintMirror(upToCaret, '');
+      none();
       return;
     }
 
@@ -148,49 +197,52 @@ const CodeEditor = (() => {
     const spaced = /\s$/.test(beforeCaret);
     const missing = missingLines(lines, cursorIdx);
 
-    let hint = null;
+    let match = null;     // baris panduan yang lagi diikuti
+    let rest = null;      // sisanya (buat ditampilin inline)
+    let restRaw = null;   // sisanya sebelum spasi depan dibuang
     let complete = false; // baris di kursor udah persis sama satu baris panduan
     for (const line of missing) {
-      let rest = typed === '' ? line : remainderAfter(line, typed);
-      if (rest === '') complete = true;
-      if (rest && spaced) rest = rest.replace(/^ +/, '');
-      if (rest) {
-        hint = rest;
+      const left = typed === '' ? line : remainderAfter(line, typed);
+      if (left === '') complete = true;
+      let shown = left;
+      if (shown && spaced) shown = shown.replace(/^ +/, '');
+      if (shown) {
+        match = line;
+        restRaw = left;
+        rest = shown;
         break;
       }
     }
 
-    if (!hint) {
-      // Baris ini udah bener dan lengkap: ga ada yang perlu ditampilkan.
-      if (complete) {
-        paintMirror(upToCaret, '');
-        return;
-      }
-      // Ga ada baris panduan yang cocok (salah ketik / salah tap simbol).
-      // Jangan sembunyi: tampilkan baris panduan paling mirip di bawah kursor
-      // sebagai referensi. Cuma kalau kursor di baris terakhir, biar ga
-      // numpuk di atas teks baris lain.
-      const onLastLine = cursorIdx === lines.length - 1;
-      if (!onLastLine || missing.length === 0) {
-        paintMirror(upToCaret, '');
-        return;
-      }
-      let best = missing[0];
-      let bestLen = -1;
-      for (const line of missing) {
-        const n = matchLen(line, typed);
-        if (n > bestLen) {
-          best = line;
-          bestLen = n;
-        }
-      }
-      paintMirror(upToCaret, '\n' + best);
-      syncScroll();
+    if (match) {
+      // `full` buat strip: bagian yang udah diketik dibuat redup, sisanya terang.
+      placeHint(upToCaret, match, rest, false, restRaw);
       return;
     }
 
-    paintMirror(upToCaret, hint);
-    syncScroll();
+    // Baris ini udah bener dan lengkap: ga ada yang perlu ditampilkan.
+    if (complete) {
+      none();
+      return;
+    }
+    // Ga ada baris panduan yang cocok (salah ketik / salah tap simbol).
+    // Tampilkan baris panduan paling mirip sebagai referensi, tapi cuma kalau
+    // kursor di baris terakhir, biar ga numpuk di atas teks baris lain.
+    const onLastLine = cursorIdx === lines.length - 1;
+    if (!onLastLine || missing.length === 0) {
+      none();
+      return;
+    }
+    let best = missing[0];
+    let bestLen = -1;
+    for (const line of missing) {
+      const n = matchLen(line, typed);
+      if (n > bestLen) {
+        best = line;
+        bestLen = n;
+      }
+    }
+    placeHint(upToCaret, best, '', true, '');
   }
 
   function updateGutter() {
@@ -241,10 +293,12 @@ const CodeEditor = (() => {
       ta.scrollLeft = x - ta.clientWidth + margin;
     }
 
+    // Strip "Lanjutan" nutupin dasar editor: baris kursor harus di atasnya.
+    const hintH = hintShown ? hintEl.offsetHeight : 0;
     if (y < ta.scrollTop) {
       ta.scrollTop = Math.max(0, y - 4);
-    } else if (y + lh > ta.scrollTop + ta.clientHeight) {
-      ta.scrollTop = y + lh - ta.clientHeight + 8;
+    } else if (y + lh > ta.scrollTop + ta.clientHeight - hintH) {
+      ta.scrollTop = y + lh - ta.clientHeight + hintH + 8;
     }
 
     syncScroll();
@@ -367,6 +421,7 @@ const CodeEditor = (() => {
     updateGutter();
     refreshGhost();
     revealCaret();
+    refreshGhost(); // ukur ulang setelah gulungan berubah
   }
 
   // Sisipkan teks di kursor. execCommand dipakai biar undo (Ctrl+Z) tetap jalan.
@@ -468,12 +523,13 @@ const CodeEditor = (() => {
         <div class="ed-gutter" aria-hidden="true"></div>
         <div class="ed-body">
           <div class="ed-errline" aria-hidden="true"></div>
-          <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-caret" style="display:inline-block;width:0;height:1em"></span><span class="ed-ghost"></span></pre>
+          <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-caret" style="display:inline-block;width:0;height:1em"></span><span class="ed-ghost"></span><span class="ed-meas">MMMMMMMMMM</span></pre>
           <textarea class="ed-input" wrap="off" spellcheck="false" autocomplete="off"
             autocapitalize="off" autocorrect="off" enterkeyhint="enter"
             aria-label="Editor kode C++"></textarea>
           <div class="ed-fx" aria-hidden="true"></div>
           <div class="ed-combo" aria-hidden="true"></div>
+          <div class="ed-hint" aria-hidden="true" hidden><span class="ed-hint-label">Lanjutan</span><code><span class="hd"></span><span class="hn"></span></code></div>
         </div>
       </div>`;
 
@@ -486,11 +542,15 @@ const CodeEditor = (() => {
     before = host.querySelector('.ed-before');
     caretMark = host.querySelector('.ed-caret');
     ghost = host.querySelector('.ed-ghost');
+    measEl = host.querySelector('.ed-meas');
+    hintEl = host.querySelector('.ed-hint');
+    hintDone = hintEl.querySelector('.hd');
+    hintNext = hintEl.querySelector('.hn');
     ta = host.querySelector('.ed-input');
 
     ta.addEventListener('input', onChange);
     ta.addEventListener('input', typingFx); // setelah onChange: posisi kursor udah terbaru
-    ta.addEventListener('scroll', syncScroll);
+    ta.addEventListener('scroll', () => { syncScroll(); refreshGhost(); });
     ta.addEventListener('keyup', refreshGhost);
     ta.addEventListener('click', refreshGhost);
     ta.addEventListener('focus', refreshGhost);
