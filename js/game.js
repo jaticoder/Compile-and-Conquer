@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'compile-and-conquer-level' + (Lang.current() === 'cpp' ? '' : `-${Lang.current()}`);
+  const STORAGE_KEY = Lang.levelKey(Lang.current());
   const RUN_LABEL = 'Jalankan ▶';
 
   const $ = (id) => document.getElementById(id);
@@ -56,6 +56,11 @@
     settingsBack: $('settingsBack'),
     menuBtn: $('menuBtn'),
     lessonBtn: $('lessonBtn'),
+    mapBtn: $('mapBtn'),
+    // peta bab
+    chapters: $('chapters'),
+    chapterGrid: $('chapterGrid'),
+    chaptersBack: $('chaptersBack'),
     // transisi
     wipe: $('wipe'),
     scrim: $('scrim'),
@@ -536,6 +541,7 @@
 
     Sound.win();
     if (levelIndex === LEVELS.length - 1) {
+      Lang.markDone();
       showModal(); // boss terakhir: ga ada level lanjutan
       return;
     }
@@ -545,7 +551,7 @@
   }
 
   function showModal() {
-    els.modalText.textContent = `${LEVELS[levelIndex].boss.name} tumbang! Boss berikutnya segera hadir.`;
+    els.modalText.textContent = `${LEVELS[levelIndex].boss.name} tumbang! Semua boss di bab ${Lang.info().label} udah kalah. Coba bab lain lewat Peta Bab di menu.`;
     els.modal.hidden = false;
     els.nextBtn.focus();
   }
@@ -647,6 +653,100 @@
 
   function paintPlay() {
     els.playBtn.textContent = inGame || levelIndex > 0 ? 'Lanjut' : 'Main';
+  }
+
+  // ---------- Peta bab ----------
+  // Satu kartu per bahasa. Semua bab terbuka. Python diberi label "Disarankan"
+  // buat pemula, JavaScript "Segera hadir". Pilih bahasa lain = muat ulang
+  // halaman (lihat lang.js), lalu langsung masuk game.
+
+  const CHAPTERS = [
+    { id: 'python', name: 'Python', blurb: 'Paling ringkas, ga ada kerangka panjang. Cocok buat yang belum pernah ngoding.', tag: 'Disarankan mulai di sini' },
+    { id: 'cpp', name: 'C++', blurb: 'Dipakai di kuliah Informatika. Ada kerangka program yang dijelasin pelan-pelan.' },
+    { id: 'js', name: 'JavaScript', blurb: 'Bahasa buat bikin web. Bab ini belum jadi.', soon: true },
+  ];
+
+  function chapterMeta(prog) {
+    if (prog.finished) return 'Tamat. Semua boss udah kalah.';
+    if (prog.beaten === 0) return 'Belum mulai';
+    return `Lanjut dari level ${prog.beaten + 1}`;
+  }
+
+  function buildChapters() {
+    els.chapterGrid.textContent = '';
+    CHAPTERS.forEach((ch) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'chapter' + (ch.tag ? ' pick' : '') + (ch.soon ? ' soon' : '');
+      card.dataset.lang = ch.id;
+      if (ch.soon) card.disabled = true;
+
+      const name = document.createElement('span');
+      name.className = 'ch-name';
+      name.textContent = ch.name;
+      card.appendChild(name);
+
+      if (ch.tag) {
+        const tag = document.createElement('span');
+        tag.className = 'ch-tag';
+        tag.textContent = ch.tag;
+        card.appendChild(tag);
+      }
+
+      const blurb = document.createElement('span');
+      blurb.className = 'ch-blurb';
+      blurb.textContent = ch.blurb;
+      card.appendChild(blurb);
+
+      const foot = document.createElement('span');
+      foot.className = 'ch-foot';
+      if (ch.soon) {
+        foot.textContent = 'Segera hadir';
+      } else {
+        const prog = Lang.progress(ch.id);
+        const bar = document.createElement('span');
+        bar.className = 'ch-bar' + (prog.finished ? ' full' : '');
+        bar.setAttribute('aria-hidden', 'true');
+        for (let i = 0; i < prog.total; i++) {
+          const seg = document.createElement('i');
+          if (i < prog.beaten) seg.className = 'on';
+          bar.appendChild(seg);
+        }
+        const count = document.createElement('span');
+        count.className = 'ch-count';
+        count.textContent = `${prog.beaten} dari ${prog.total} boss`;
+        const meta = document.createElement('span');
+        meta.className = 'ch-meta';
+        meta.textContent = chapterMeta(prog);
+        foot.append(bar, count, meta);
+        card.addEventListener('click', () => pickChapter(ch.id));
+      }
+      card.appendChild(foot);
+      els.chapterGrid.appendChild(card);
+    });
+  }
+
+  function openChapters() {
+    if (transitioning && els.chapters.hidden) return;
+    buildChapters();
+    els.chapters.hidden = false;
+    anim(els.chapters, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
+    anim(els.chapterGrid, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 60, easing: 'ease-out', fill: 'backwards' });
+    const first = els.chapterGrid.querySelector('.chapter:not(:disabled)');
+    if (first) first.focus({ preventScroll: true });
+  }
+
+  function closeChapters() {
+    els.chapters.hidden = true;
+  }
+
+  function pickChapter(id) {
+    if (id !== Lang.current()) {
+      Lang.set(id, true); // muat ulang, lalu langsung masuk game
+      return;
+    }
+    closeChapters();
+    startGame();
   }
 
   function paintMute() {
@@ -754,10 +854,11 @@
     els.playBtn.focus({ preventScroll: true });
   }
 
-  async function startGame() {
+  async function startGame(auto) {
     if (transitioning) return;
     transitioning = true;
-    Sound.unlock();
+    // Setelah reload dari peta bab belum ada sentuhan baru, jadi suara belum boleh dibuka.
+    if (auto !== true) Sound.unlock();
 
     els.lobby.classList.remove('boot');
     els.lobby.classList.add('leaving');
@@ -829,7 +930,16 @@
     // Lobby
     setSprite(els.lobbyHero, 'assets/hero/hero.png', '🧑‍💻', 'Hero');
     setSprite(els.lobbyBoss, LEVELS[0].boss.sprite, LEVELS[0].boss.emoji, LEVELS[0].boss.name);
-    els.playBtn.addEventListener('click', startGame);
+    // Main pertama kali buka peta bab. Kalau udah ada progress atau lagi di tengah game, langsung lanjut.
+    els.playBtn.addEventListener('click', () => {
+      if (inGame || levelIndex > 0) startGame();
+      else openChapters();
+    });
+    els.mapBtn.addEventListener('click', () => { Sound.click(); openChapters(); });
+    els.chaptersBack.addEventListener('click', () => { Sound.click(); closeChapters(); els.mapBtn.focus({ preventScroll: true }); });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !els.chapters.hidden) { closeChapters(); els.mapBtn.focus({ preventScroll: true }); }
+    });
     els.settingsBtn.addEventListener('click', () => { Sound.click(); showSettings(true); });
     els.settingsBack.addEventListener('click', () => { Sound.click(); showSettings(false); });
     els.menuBtn.addEventListener('click', () => { Sound.click(); openLobby(); });
@@ -859,6 +969,12 @@
 
     // Siapin level di belakang lobby biar gambar sprite udah ke-load pas Main ditekan.
     renderLevel(false);
+
+    // Habis pilih bahasa lain di peta bab: halaman dimuat ulang, langsung masuk game.
+    if (Lang.consumeAutostart()) {
+      els.lobby.classList.remove('boot');
+      startGame(true);
+    }
   }
 
   init();

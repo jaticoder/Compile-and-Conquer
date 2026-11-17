@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=25">
+  <link rel="stylesheet" href="css/style.css?v=26">
 </head>
 <body data-view="menu">
 
@@ -111,13 +111,9 @@
         <p class="lobby-tag">Belajar coding sambil ngalahin boss</p>
       </div>
 
-      <div class="lang-pick" role="group" aria-label="Pilih bahasa">
-        <button class="btn ghost small lang-btn" type="button" data-lang="cpp" aria-pressed="true">C++</button>
-        <button class="btn ghost small lang-btn" type="button" data-lang="python" aria-pressed="false">Python</button>
-      </div>
-
       <nav class="lobby-menu" id="lobbyMenu" aria-label="Menu utama">
         <button class="btn" id="playBtn" type="button">Main</button>
+        <button class="btn ghost" id="mapBtn" type="button">Peta Bab</button>
         <button class="btn ghost" id="settingsBtn" type="button">Pengaturan</button>
         <a class="btn ghost" id="portfolioLink" href="https://jaticoder.github.io/Portofolio/">Kembali ke Portofolio</a>
       </nav>
@@ -155,6 +151,16 @@
       </section>
     </div>
   </div>
+
+  <!-- Peta bab: pilih bahasa -->
+  <section class="chapters" id="chapters" hidden aria-labelledby="chaptersTitle">
+    <div class="chapters-inner">
+      <h2 id="chaptersTitle">Peta Bab</h2>
+      <p class="chapters-sub">Semua bab terbuka. Pilih bahasa yang mau kamu pelajari. Progress tiap bab disimpan terpisah.</p>
+      <div class="chapter-grid" id="chapterGrid"></div>
+      <button class="btn ghost" id="chaptersBack" type="button">Kembali</button>
+    </div>
+  </section>
 
   <!-- Gulungan soal: lapisan gelap + tombol Mulai -->
   <div class="scrim" id="scrim" aria-hidden="true"></div>
@@ -200,15 +206,15 @@
     </div>
   </div>
 
-  <script src="js/levels.js?v=14"></script>
-  <script src="js/lessons.js?v=21"></script>
-  <script src="js/python.js?v=21"></script>
-  <script src="js/lang.js?v=25"></script>
+  <script src="js/levels.js?v=26"></script>
+  <script src="js/lessons.js?v=26"></script>
+  <script src="js/python.js?v=26"></script>
+  <script src="js/lang.js?v=26"></script>
   <script src="js/lesson.js?v=21"></script>
   <script src="js/sound.js?v=24"></script>
-  <script src="js/errors.js?v=14"></script>
+  <script src="js/errors.js?v=26"></script>
   <script src="js/judge.js?v=21"></script>
   <script src="js/editor.js?v=25"></script>
-  <script src="js/game.js?v=21"></script>
+  <script src="js/game.js?v=26"></script>
 </body>
 </html>

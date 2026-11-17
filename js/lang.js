@@ -2,14 +2,19 @@
 // Dimuat sebelum game.js. Kalau Python dipilih, isi LEVELS dan LESSONS
 // ditukar dengan versi Python, jadi sisa kode game ga perlu tau bedanya.
 // Ganti bahasa = simpan pilihan lalu muat ulang halaman (paling aman).
+// Bahasa dipilih lewat peta bab (lihat game.js).
 
 const LANGS = {
   cpp: { label: 'C++', judgeId: 54, start: '#include' },
   python: { label: 'Python', judgeId: 71, start: 'baris pertama' },
 };
 
+// Jumlah level tiap bahasa, dicatat sebelum LEVELS ditukar.
+const LANG_LEVEL_COUNT = { cpp: LEVELS.length, python: LEVELS_PY.length };
+
 const Lang = (() => {
   const KEY = 'compile-and-conquer-lang';
+  const AUTOSTART_KEY = 'compile-and-conquer-autostart';
   let cur = 'cpp';
   try {
     const saved = localStorage.getItem(KEY);
@@ -26,16 +31,54 @@ const Lang = (() => {
     swap(LESSON_FOR_CONCEPT, LESSON_FOR_CONCEPT_PY);
   }
 
-  function set(next) {
+  // Key progress. C++ pakai key lama (tanpa akhiran) biar progress lama tetap kebaca.
+  const suffix = (lang) => (lang === 'cpp' ? '' : `-${lang}`);
+  const levelKey = (lang) => `compile-and-conquer-level${suffix(lang)}`;
+  const doneKey = (lang) => `compile-and-conquer-done${suffix(lang)}`;
+
+  // Ganti bahasa lalu muat ulang. `autostart` = langsung masuk game setelah reload.
+  function set(next, autostart) {
     if (!LANGS[next] || next === cur) return;
-    try { localStorage.setItem(KEY, next); } catch (err) { /* abaikan */ }
+    try {
+      localStorage.setItem(KEY, next);
+      if (autostart) sessionStorage.setItem(AUTOSTART_KEY, '1');
+    } catch (err) { /* abaikan */ }
     location.reload();
   }
 
-  return { current: () => cur, info: () => LANGS[cur], set };
+  // Dipanggil sekali pas halaman dimuat: true kalau reload ini dari pilihan di peta bab.
+  function consumeAutostart() {
+    try {
+      const yes = sessionStorage.getItem(AUTOSTART_KEY) === '1';
+      sessionStorage.removeItem(AUTOSTART_KEY);
+      return yes;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // Progress satu bahasa buat peta bab: berapa boss yang udah kalah.
+  function progress(lang) {
+    const total = LANG_LEVEL_COUNT[lang] || 0;
+    let beaten = 0;
+    let finished = false;
+    try {
+      finished = localStorage.getItem(doneKey(lang)) === '1';
+      const saved = parseInt(localStorage.getItem(levelKey(lang)), 10);
+      if (saved > 0) beaten = Math.min(saved, total);
+    } catch (err) { /* abaikan */ }
+    if (finished) beaten = total;
+    return { beaten, total, finished };
+  }
+
+  function markDone() {
+    try { localStorage.setItem(doneKey(cur), '1'); } catch (err) { /* abaikan */ }
+  }
+
+  return { current: () => cur, info: () => LANGS[cur], set, consumeAutostart, progress, markDone, levelKey };
 })();
 
-// Tampilan: tombol pilihan di lobby + teks yang nyebut nama bahasa.
+// Tampilan: teks yang nyebut nama bahasa.
 (() => {
   const info = Lang.info();
   document.title = `Compile & Conquer: ${info.label}`;
@@ -47,11 +90,4 @@ const Lang = (() => {
     code.textContent = info.start;
     note.append(code, '.');
   }
-  document.querySelectorAll('.lang-btn').forEach((btn) => {
-    btn.setAttribute('aria-pressed', String(btn.dataset.lang === Lang.current()));
-    btn.addEventListener('click', () => {
-      if (typeof Sound !== 'undefined') Sound.click();
-      Lang.set(btn.dataset.lang);
-    });
-  });
 })();

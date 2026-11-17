@@ -74,6 +74,8 @@ const ErrorHelp = (() => {
       message = 'Tanda > penutup di #include belum ada. Harusnya: #include <iostream>';
     } else if (/missing terminating " character/.test(text)) {
       message = 'Tanda kutip penutup (") belum ada di baris ini. Teks harus diapit dua tanda kutip.';
+    } else if (/expected ';' after (?:struct|class) definition/.test(text)) {
+      message = 'Penutup struct harus }; pakai titik koma setelah tanda }.';
     } else if (/expected (?:',' or )?';'/.test(text)) {
       if (/at end of input/.test(text)) {
         line = lastCodeLine(lines);
@@ -91,6 +93,10 @@ const ErrorHelp = (() => {
       message = notDeclared(m[1]);
     } else if ((m = text.match(/'(.+)' does not name a type/))) {
       message = `'${m[1]}' ketemu di luar main() atau salah ketik. Perintah harus ada di dalam int main() { ... }.`;
+    } else if (/too (?:few|many) arguments to function|no matching function for call/.test(text)) {
+      message = 'Jumlah data di dalam kurung ga cocok sama function-nya. Cek lagi berapa yang diminta.';
+    } else if (/has no member named/.test(text)) {
+      message = 'Nama bagian setelah titik ga ada di struct itu. Cek ejaan, misalnya k.nama dan k.hp.';
     } else if (/expected '\)'/.test(text)) {
       message = 'Kurung tutup ) kurang di baris ini. Tiap ( harus punya pasangan ).';
     } else if (/expected '\('/.test(text)) {

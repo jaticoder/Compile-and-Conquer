@@ -35,6 +35,55 @@ const LEVELS_PY = [
     ghost: ['for i in range(1, 6):', 'print(i)'],
     requires: [{ pattern: /for\s+\w+\s+in\b/, message: 'Outputnya bener, tapi pakai for ya. Ular ini cuma tumbang sama loop.' }],
   }),
+  py(5, {
+    concept: 'function',
+    task: 'Function Golem cuma bisa digerakkan lewat perintah bernama (function). Buat function bernama sapa yang menampilkan "Halo Golem", lalu panggil function itu dua kali.',
+    ghost: ['def sapa():', 'print("Halo Golem")', 'sapa()', 'sapa()'],
+    requires: [
+      { pattern: /def\s+sapa\s*\(\s*\)\s*:/, message: 'Outputnya udah bener, tapi bikin dulu function-nya ya: def sapa():' },
+      { pattern: /^sapa\(\)[ \t]*$[\s\S]*^sapa\(\)[ \t]*$/m, message: 'Function-nya harus dipanggil dua kali, masing-masing di barisnya sendiri: sapa()' },
+    ],
+  }),
+  py(6, {
+    concept: 'list',
+    task: 'Array Hydra punya tiga kepala bernomor, masing-masing bawa angka 10, 20, dan 30. Simpan ketiganya di satu list bernama skor, lalu tampilkan kepala pertama dan kepala ketiga, masing-masing di baris sendiri.',
+    ghost: ['skor = [10, 20, 30]', 'print(skor[0])', 'print(skor[2])'],
+    requires: [
+      { pattern: /skor\s*=\s*\[/, message: 'Outputnya udah bener, tapi simpan dulu di list ya: skor = [10, 20, 30]' },
+      { pattern: /skor\s*\[\s*0\s*\][\s\S]*skor\s*\[\s*2\s*\]/, message: 'Ambil isinya pakai nomor kepala: skor[0] buat yang pertama, skor[2] buat yang ketiga.' },
+    ],
+  }),
+  py(7, {
+    concept: 'while loop',
+    task: 'While Drake menyerang selama masih ada tenaga. Buat variable n = 3. Selama n >= 1, tampilkan n lalu kurangi n sebanyak 1. Hasilnya hitung mundur 3, 2, 1 (satu angka per baris).',
+    ghost: ['n = 3', 'while n >= 1:', 'print(n)', 'n -= 1'],
+    requires: [
+      { pattern: /\bn\s*=\s*3/, message: 'Outputnya udah bener, tapi bikin dulu variable-nya ya: n = 3' },
+      { pattern: /while\s+[^\n:]+:/, message: 'Hampir! Naga ini cuma tumbang sama while. Pakai while ... :' },
+    ],
+  }),
+  py(8, {
+    concept: 'class',
+    boss: { ...LEVELS[8].boss, name: 'Class Knight' },
+    task: 'Class Knight kebal sama data yang berserakan. Buat class bernama Ksatria yang punya nama dan hp (isi lewat __init__). Bikin satu Ksatria dengan nama "Arthur" dan hp 100, lalu tampilkan: Arthur 100',
+    expected: 'Arthur 100',
+    ghost: ['class Ksatria:', 'def __init__(self, nama, hp):', 'self.nama = nama', 'self.hp = hp', 'k = Ksatria("Arthur", 100)', 'print(k.nama, k.hp)'],
+    requires: [
+      { pattern: /class\s+Ksatria\s*:/, message: 'Outputnya udah bener, tapi bikin dulu class-nya ya: class Ksatria:' },
+      { pattern: /Ksatria\s*\(\s*["']Arthur["']\s*,\s*100\s*\)/, message: 'Bikin ksatrianya dari class: k = Ksatria("Arthur", 100)' },
+    ],
+  }),
+  py(9, {
+    concept: 'gabungan',
+    boss: { ...LEVELS[9].boss, name: 'Traceback Dragon' },
+    task: 'Boss terakhir! Traceback Dragon cuma kalah sama gabungan jurusmu. Buat function tambah(a, b) yang mengembalikan a + b. Lalu buat total = 0. Pakai for dari 1 sampai 3, dan tiap putaran isi total dengan tambah(total, i). Tampilkan total di akhir.',
+    ghost: ['def tambah(a, b):', 'return a + b', 'total = 0', 'for i in range(1, 4):', 'total = tambah(total, i)', 'print(total)'],
+    requires: [
+      { pattern: /def\s+tambah\s*\(\s*\w+\s*,\s*\w+\s*\)\s*:/, message: 'Hasilnya bener, tapi bikin dulu function-nya ya: def tambah(a, b):' },
+      { pattern: /for\s+\w+\s+in\b/, message: 'Naga ini juga lemah sama for. Pakai for buat ngulang dari 1 sampai 3.' },
+      { pattern: /=\s*tambah\s*\(/, message: 'Panggil function-nya di dalam loop: total = tambah(total, i)' },
+    ],
+  }),
 ];
 
 const LESSON_FOR_CONCEPT_PY = {
@@ -43,6 +92,11 @@ const LESSON_FOR_CONCEPT_PY = {
   operator: 'operator',
   'if-else': 'if-else',
   'for loop': 'for loop',
+  function: 'function',
+  list: 'list',
+  'while loop': 'while loop',
+  class: 'class',
+  gabungan: 'gabungan',
 };
 
 const LESSONS_PY = {
@@ -208,6 +262,127 @@ const LESSONS_PY = {
       },
     ],
   },
+
+  function: {
+    kicker: 'Gulungan Materi',
+    title: 'function: resep yang dikasih nama',
+    slides: [
+      {
+        title: 'Bikin perintah sendiri',
+        text: ['Function itu sekumpulan perintah yang dikasih nama. Sekali bikin, bisa dipakai berkali-kali. Ketuk tiap bagiannya.'],
+        code: [
+          [['def', 'Artinya "bikin function". Selalu huruf kecil.', true], ' ', ['sapa', 'Nama function-nya. Kamu yang milih.'], ['()', 'Tanda kurung wajib ada, walau kosong.'], [':', 'Titik dua wajib. Artinya "isinya ada di baris bawah".']],
+          ['    ', ['print("Halo Golem")', 'Menjorok 4 spasi = isi function. Ini yang dikerjain tiap function dipanggil.']],
+        ],
+      },
+      {
+        title: 'Panggil pakai namanya',
+        text: ['Bikin function itu baru nulis resep. Resepnya baru "dimasak" kalau dipanggil.'],
+        code: [
+          [['sapa()', 'Panggil function. Ga menjorok, sejajar sama `def`. Satu panggilan = isi function jalan satu kali.', true]],
+          [['sapa()', 'Dipanggil dua kali, jadi tulisannya muncul dua kali.']],
+        ],
+        tip: 'Function dibuat dulu di atas, baru dipanggil di bawahnya.',
+      },
+    ],
+  },
+
+  list: {
+    kicker: 'Gulungan Materi',
+    title: 'list: deretan kotak bernomor',
+    slides: [
+      {
+        title: 'Banyak isi, satu nama',
+        text: ['Kalau datanya banyak, bikin kotak satu-satu itu capek. List nyimpen banyak isi sekaligus di bawah satu nama.'],
+        code: [
+          [['skor', 'Nama list-nya. Kamu yang milih.'], ' = ', ['[10, 20, 30]', 'Isinya ditulis di dalam kurung siku, dipisah koma. Di sini ada tiga isi.', true]],
+        ],
+      },
+      {
+        title: 'Nomornya mulai dari 0',
+        text: ['Tiap isi punya nomor urut. Yang pertama bukan nomor 1, tapi nomor 0.'],
+        code: [
+          [['skor[0]', 'Isi pertama: `10`.'], '  ', ['skor[1]', 'Isi kedua: `20`.'], '  ', ['skor[2]', 'Isi ketiga: `30`.', true]],
+          [['print(skor[2])', 'Tampilin isi ketiga: `30`.']],
+        ],
+        tip: 'List berisi 3 hal punya nomor 0, 1, 2. Ga ada nomor 3, nanti error.',
+      },
+    ],
+  },
+
+  'while loop': {
+    kicker: 'Gulungan Materi',
+    title: 'while: ulangi selama masih benar',
+    slides: [
+      {
+        title: 'Ulang selama syaratnya benar',
+        text: ['`while` ngulang isinya terus selama syaratnya masih benar. Kalau udah salah, berhenti. Ketuk bagiannya.'],
+        code: [
+          ['n = 3'],
+          [['while', 'Artinya "selama". Ngulang isinya selama syarat di sebelahnya benar.', true], ' ', ['n >= 1', 'Syaratnya. Selama `n` masih 1 atau lebih, putar lagi.'], [':', 'Titik dua wajib.']],
+          ['    ', ['print(n)', 'Tampilin `n`. Menjorok = isi yang diulang.']],
+          ['    ', ['n -= 1', 'Kurangi `n` sebanyak 1. Penting: tanpa ini, `n` ga pernah berubah dan loop-nya ga pernah berhenti.']],
+        ],
+      },
+      {
+        title: 'Jangan lupa ubah angkanya',
+        text: [
+          '`n -= 1` artinya "kurangi `n` dengan 1". Jadi `n` berubah 3, 2, 1, lalu jadi 0 dan loop berhenti.',
+          'Kalau lupa, game bakal bilang "Programnya kelamaan jalan". Itu tanda loop-mu ga pernah berhenti.',
+        ],
+        tip: '`for` cocok kalau kamu tau berapa kali ngulang. `while` cocok kalau ngulangnya "selama masih ...".',
+      },
+    ],
+  },
+
+  class: {
+    kicker: 'Gulungan Materi',
+    title: 'class: cetakan data',
+    slides: [
+      {
+        title: 'Class itu cetakan',
+        text: ['Kadang satu benda punya banyak data: nama, hp, dst. Class jadi cetakan buat benda itu. Ketuk tiap bagiannya.'],
+        code: [
+          [['class', 'Artinya "bikin cetakan baru".', true], ' ', ['Ksatria', 'Nama cetakannya. Biasanya huruf depan besar.'], [':', 'Titik dua wajib.']],
+          ['    ', ['def __init__(self, nama, hp):', 'Dijalankan otomatis tiap kali bikin Ksatria baru. `nama` dan `hp` itu data yang diminta.']],
+          ['        ', ['self.nama = nama', '`self` artinya "benda ini sendiri". Baris ini nyimpen nama ke dalam benda.']],
+          ['        ', ['self.hp = hp', 'Sama, tapi buat hp.']],
+        ],
+      },
+      {
+        title: 'Bikin satu ksatria',
+        text: ['Cetakannya dipakai kayak function: tulis namanya lalu isi datanya di kurung.'],
+        code: [
+          [['k = Ksatria("Arthur", 100)', 'Bikin satu ksatria bernama Arthur, hp 100, lalu simpan di variable `k`.', true]],
+          [['print(k.nama, k.hp)', 'Titik artinya "ambil bagian ini dari `k`". Tampilnya: Arthur 100. Tanda koma di `print` ngasih spasi otomatis.']],
+        ],
+      },
+    ],
+  },
+
+  gabungan: {
+    kicker: 'Gulungan Materi',
+    title: 'Boss terakhir: gabungin semua',
+    slides: [
+      {
+        title: 'Function bisa ngasih balik hasil',
+        text: ['Function bisa nerima data (parameter) dan ngasih hasil balik (return).'],
+        code: [
+          [['def tambah(a, b):', '`a` dan `b` itu parameter: data yang dikasih waktu function dipanggil.', true]],
+          ['    ', ['return a + b', '`return` ngasih hasil balik ke yang manggil. Di sini hasilnya `a + b`.']],
+          [['tambah(2, 3)', 'Hasilnya `5`. Bisa ditaruh di variable: `x = tambah(2, 3)`.']],
+        ],
+      },
+      {
+        title: 'Rakit semuanya',
+        text: [
+          'Soal terakhir ngegabungin function, variable, dan for. Ikuti jalannya:',
+          'Awalnya `total` = 0. Putaran 1: `total` = 0 + 1 = 1. Putaran 2: 1 + 2 = 3. Putaran 3: 3 + 3 = 6.',
+        ],
+        tip: '`range(1, 4)` menghasilkan 1, 2, 3. Angka akhirnya (4) ga ikut.',
+      },
+    ],
+  },
 };
 
 // Penerjemah error Python (Traceback) jadi penjelasan ramah.
@@ -268,6 +443,14 @@ const PyErrors = (() => {
       message = 'Buat membandingkan pakai == (dua sama dengan), bukan = yang buat mengisi kotak.';
     } else if ((m = text.match(/name '(.+)' is not defined/))) {
       message = nameHelp(m[1]);
+    } else if (kind === 'TypeError' && /missing \d+ required positional argument/.test(text)) {
+      message = 'Function atau class ini butuh lebih banyak data waktu dipanggil. Cek jumlah isi di dalam kurungnya.';
+    } else if (kind === 'TypeError' && /takes \d+ positional arguments? but \d+ (?:was|were) given/.test(text)) {
+      message = 'Jumlah data yang kamu kasih ke function atau class ini ga cocok sama yang diminta. Cek isi di dalam kurungnya.';
+    } else if (kind === 'AttributeError') {
+      message = 'Bagian setelah titik ga ketemu di benda itu. Cek ejaan, misalnya k.nama dan k.hp.';
+    } else if (kind === 'IndexError') {
+      message = 'Nomor yang kamu minta ga ada di list. Ingat, nomornya mulai dari 0.';
     } else if (kind === 'TypeError') {
       message = 'Jenis datanya ga cocok, misalnya nambah tulisan dengan angka. Cek isi baris ini.';
     } else if (kind === 'ZeroDivisionError') {

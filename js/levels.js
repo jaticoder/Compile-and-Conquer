@@ -143,4 +143,171 @@ const LEVELS = [
       },
     ],
   },
+  {
+    id: 6,
+    tier: 'medium',
+    concept: 'function',
+    boss: {
+      name: 'Function Golem',
+      sprite: 'assets/bosses/function-golem.png',
+      emoji: '🗿',
+    },
+    task: 'Function Golem cuma bisa digerakkan lewat perintah bernama (function). Buat function bernama sapa yang menampilkan "Halo Golem", lalu panggil function itu dua kali dari main().',
+    expected: 'Halo Golem\nHalo Golem',
+    starter: STARTER_EMPTY,
+    ghost: [
+      ...GHOST_TOP.slice(0, 2),
+      'void sapa() {',
+      'cout << "Halo Golem\\n";',
+      '}',
+      'int main() {',
+      'sapa();',
+      'sapa();',
+      ...GHOST_END,
+    ],
+    requires: [
+      {
+        pattern: /void\s+sapa\s*\(\s*\)\s*\{/,
+        message: 'Outputnya udah bener, tapi bikin dulu function-nya ya: void sapa() { ... }',
+      },
+      {
+        pattern: /sapa\s*\(\s*\)\s*;[\s\S]*sapa\s*\(\s*\)\s*;/,
+        message: 'Function-nya harus dipanggil dua kali dari main(): sapa(); sapa();',
+      },
+    ],
+  },
+  {
+    id: 7,
+    tier: 'expert',
+    concept: 'array',
+    boss: {
+      name: 'Array Hydra',
+      sprite: 'assets/bosses/array-hydra.png',
+      emoji: '🐉',
+    },
+    task: 'Array Hydra punya tiga kepala bernomor, masing-masing bawa angka 10, 20, dan 30. Simpan ketiganya di satu array bernama skor, lalu tampilkan kepala pertama dan kepala ketiga, masing-masing di baris sendiri.',
+    expected: '10\n30',
+    starter: STARTER_EMPTY,
+    ghost: ghostFor(
+      'int skor[3] = {10, 20, 30};',
+      'cout << skor[0] << "\\n";',
+      'cout << skor[2];'
+    ),
+    requires: [
+      {
+        pattern: /int\s+skor\s*\[\s*\d*\s*\]\s*=\s*\{/,
+        message: 'Outputnya udah bener, tapi simpan dulu di array ya: int skor[3] = {10, 20, 30};',
+      },
+      {
+        pattern: /skor\s*\[\s*0\s*\][\s\S]*skor\s*\[\s*2\s*\]/,
+        message: 'Ambil isinya pakai nomor kepala: skor[0] buat yang pertama, skor[2] buat yang ketiga.',
+      },
+    ],
+  },
+  {
+    id: 8,
+    tier: 'expert',
+    concept: 'while loop',
+    boss: {
+      name: 'While Drake',
+      sprite: 'assets/bosses/while-drake.png',
+      emoji: '🦎',
+    },
+    task: 'While Drake menyerang selama masih ada tenaga. Buat variable int n = 3. Selama n >= 1, tampilkan n lalu kurangi n sebanyak 1. Hasilnya hitung mundur 3, 2, 1 (satu angka per baris).',
+    expected: '3\n2\n1',
+    starter: STARTER_EMPTY,
+    ghost: ghostFor(
+      'int n = 3;',
+      'while (n >= 1) {',
+      'cout << n << "\\n";',
+      'n--;',
+      '}'
+    ),
+    requires: [
+      {
+        pattern: /int\s+n\s*=\s*3/,
+        message: 'Outputnya udah bener, tapi bikin dulu variable-nya ya: int n = 3;',
+      },
+      {
+        pattern: /while\s*\(/,
+        message: 'Hampir! Naga ini cuma tumbang sama while. Pakai while (...) { ... }',
+      },
+    ],
+  },
+  {
+    id: 9,
+    tier: 'expert',
+    concept: 'struct',
+    boss: {
+      name: 'Struct Knight',
+      sprite: 'assets/bosses/struct-knight.png',
+      emoji: '🛡️',
+    },
+    task: 'Struct Knight kebal sama data yang berserakan. Buat struct bernama Ksatria yang punya nama (string) dan hp (int). Bikin satu Ksatria, isi namanya "Arthur" dan hp-nya 100, lalu tampilkan: Arthur 100',
+    expected: 'Arthur 100',
+    starter: STARTER_EMPTY,
+    ghost: [
+      ...GHOST_TOP.slice(0, 2),
+      'struct Ksatria {',
+      'string nama;',
+      'int hp;',
+      '};',
+      'int main() {',
+      'Ksatria k;',
+      'k.nama = "Arthur";',
+      'k.hp = 100;',
+      'cout << k.nama << " " << k.hp;',
+      ...GHOST_END,
+    ],
+    requires: [
+      {
+        pattern: /struct\s+Ksatria\s*\{/,
+        message: 'Outputnya udah bener, tapi bikin dulu struct-nya ya: struct Ksatria { ... };',
+      },
+      {
+        pattern: /\.\s*nama\s*=[\s\S]*\.\s*hp\s*=/,
+        message: 'Isi datanya lewat titik: k.nama = "Arthur"; lalu k.hp = 100;',
+      },
+    ],
+  },
+  {
+    id: 10,
+    tier: 'expert',
+    concept: 'gabungan',
+    boss: {
+      name: 'Segfault Dragon',
+      sprite: 'assets/bosses/segfault-dragon.png',
+      emoji: '🐲',
+    },
+    task: 'Boss terakhir! Segfault Dragon cuma kalah sama gabungan jurusmu. Buat function tambah(a, b) yang mengembalikan a + b. Lalu di main(), buat total = 0. Pakai for dari 1 sampai 3, dan tiap putaran isi total dengan tambah(total, i). Tampilkan total di akhir.',
+    expected: '6',
+    starter: STARTER_EMPTY,
+    ghost: [
+      ...GHOST_TOP.slice(0, 2),
+      'int tambah(int a, int b) {',
+      'return a + b;',
+      '}',
+      'int main() {',
+      'int total = 0;',
+      'for (int i = 1; i <= 3; i++) {',
+      'total = tambah(total, i);',
+      '}',
+      'cout << total;',
+      ...GHOST_END,
+    ],
+    requires: [
+      {
+        pattern: /int\s+tambah\s*\(\s*int\s+\w+\s*,\s*int\s+\w+\s*\)/,
+        message: 'Hasilnya bener, tapi bikin dulu function-nya ya: int tambah(int a, int b) { return a + b; }',
+      },
+      {
+        pattern: /for\s*\(/,
+        message: 'Naga ini juga lemah sama for. Pakai for buat ngulang dari 1 sampai 3.',
+      },
+      {
+        pattern: /=\s*tambah\s*\(/,
+        message: 'Panggil function-nya di dalam loop: total = tambah(total, i);',
+      },
+    ],
+  },
 ];

@@ -1640,3 +1640,134 @@ body.lesson-open { overflow: hidden; }
 .ed-hl .to { color: #89ddff; }                     /* << = + >= */
 .ed-hl .tp { color: #89ddff; }                     /* #include */
 .ed-hl .tc { color: #6b6f94; font-style: italic; } /* // komentar */
+
+
+/* ============================================================
+   Peta bab (v26)
+   Layar pilih bahasa. Satu papan kayu per bahasa, bar progress
+   bersegmen (satu kotak per boss).
+   ============================================================ */
+.lobby.boot .lobby-menu > :nth-child(4) { animation-delay: 1s; }
+
+.chapters {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  overflow-y: auto;
+  padding: 28px 20px 40px;
+  background: var(--night-2);
+}
+
+.chapters-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(1000px, 100%);
+  min-height: 100%;
+  margin: 0 auto;
+  justify-content: center;
+}
+
+.chapters h2 {
+  margin: 0 0 12px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(18px, 4vw, 28px);
+  line-height: 1.4;
+  color: var(--coin);
+  text-shadow: 3px 3px 0 #2a1208;
+  text-align: center;
+}
+
+.chapters-sub {
+  max-width: 560px;
+  margin: 0 0 30px;
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--muted);
+}
+
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px;
+  width: 100%;
+  margin-bottom: 34px;
+}
+
+.chapter {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 22px 20px 20px;
+  text-align: left;
+  color: var(--paper);
+  background: var(--plank);
+  border: 0;
+  --c: var(--plank-line);
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c),
+    0 10px 0 0 #2a1208;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.chapter:hover:not(:disabled),
+.chapter:focus-visible { --c: var(--coin); transform: translateY(-4px); }
+.chapter:active:not(:disabled) { transform: translateY(2px); }
+.chapter.pick { --c: var(--coin-dark); }
+.chapter.pick:hover { --c: var(--coin); }
+
+.chapter.soon { cursor: not-allowed; opacity: 0.55; background: #241d2b; --c: #3a3560; }
+
+.ch-name {
+  font-family: var(--display);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--coin);
+}
+
+.ch-tag {
+  align-self: flex-start;
+  padding: 3px 10px 4px;
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 700;
+  color: #2b1a05;
+  background: var(--coin);
+}
+
+.ch-blurb {
+  flex: 1;
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--paper);
+}
+
+.ch-foot { display: flex; flex-direction: column; gap: 8px; font-family: var(--body); font-size: 15px; color: var(--muted); }
+.chapter.soon .ch-foot { font-style: italic; }
+
+.ch-bar { display: flex; gap: 3px; }
+.ch-bar i { flex: 1; height: 10px; background: #15131f; box-shadow: 0 0 0 2px #3a3560; }
+.ch-bar i.on { background: var(--ok); }
+.ch-bar.full i { background: var(--coin); }
+
+.ch-count { color: var(--paper); font-weight: 700; }
+
+@media (max-width: 860px) {
+  .chapters { padding: 20px 16px 28px; }
+  .chapters-inner { justify-content: flex-start; }
+  .chapters-sub { margin-bottom: 22px; font-size: 15px; }
+  .chapter-grid { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .chapter { padding: 16px 16px 16px; }
+  .ch-name { font-size: 13px; }
+  .ch-blurb { font-size: 15px; }
+}
