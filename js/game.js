@@ -499,15 +499,9 @@
     await enterLevel();
   }
 
-  async function winSequence(output) {
-    const text = output.trim().split('\n')[0].slice(0, 18);
-    // Boss ini kalah: level berikutnya kebuka (level lama yang diulang ga nurunin apa-apa).
-    Lang.unlock(Math.min(levelIndex + 1, LEVELS.length - 1));
-    await bringStageIntoView();
-
-    const heroBox = box(els.hero);
-    const bossBox = box(els.boss);
-
+  // Satu serangan: hero lempar bola, kena boss, output satu baris muncul
+  // sebagai damage, HP turun ke `hpPercent`.
+  async function strikeOnce(text, heroBox, bossBox, hpPercent, isLast) {
     // 1. Hero maju sedikit, lempar bola energi dari laptopnya.
     Sound.charge();
     restartClass(els.hero, 'attack');
@@ -529,18 +523,39 @@
     els.projectile.hidden = true;
 
     Sound.hit();
-    // 2. Kena: flash, ledakan, arena goyang, boss kedip, HP habis.
+    // 2. Kena: flash, ledakan, arena goyang, boss kedip, HP turun.
     restartClass(els.flash, 'go');
     restartClass(els.stage, 'shake');
     restartClass(els.boss, 'hit');
     burst(to.x, to.y, 14, 80, ['#ffffff', '#f5c22e', '#2ee6a6']);
     showPop(text, bossBox.x, bossBox.top - 10);
-    els.hpFill.style.width = '0%';
-    els.coinCount.textContent = String(Math.max(Lang.progress(Lang.current()).beaten, levelIndex + 1));
-    restartClass(els.coins, 'bump');
-    await wait(500);
+    els.hpFill.style.width = `${hpPercent}%`;
+    if (isLast) {
+      els.coinCount.textContent = String(Math.max(Lang.progress(Lang.current()).beaten, levelIndex + 1));
+      restartClass(els.coins, 'bump');
+    }
+    await wait(isLast ? 500 : 420);
     els.boss.classList.remove('hit');
     els.hero.classList.remove('attack');
+  }
+
+  async function winSequence(output) {
+    // Satu baris output = satu serangan. Output 1 baris tetap one-hit.
+    const lines = output.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) lines.push('');
+    // Boss ini kalah: level berikutnya kebuka (level lama yang diulang ga nurunin apa-apa).
+    Lang.unlock(Math.min(levelIndex + 1, LEVELS.length - 1));
+    await bringStageIntoView();
+
+    const heroBox = box(els.hero);
+    const bossBox = box(els.boss);
+
+    for (let i = 0; i < lines.length; i++) {
+      const last = i === lines.length - 1;
+      const hp = Math.round(100 - ((i + 1) / lines.length) * 100);
+      await strikeOnce(lines[i].slice(0, 18), heroBox, bossBox, hp, last);
+      if (!last) await wait(reduceMotion ? 0 : 120);
+    }
 
     // 3. Boss meledak dan hilang.
     burst(bossBox.x, bossBox.y, 28, 130, ['#ffffff', '#f5c22e', '#e8702a', '#2ee6a6']);

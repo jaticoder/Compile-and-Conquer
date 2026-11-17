@@ -30,7 +30,15 @@ const CodeEditor = (() => {
     ['==', ' == '], ['!=', ' != '], ['>=', ' >= '], ['<=', ' <= '], ['>', '>'], ['<', '<'],
     ['=', ' = '], ['+', ' + '], ['-', ' - '], ['*', ' * '], ['/', ' / '], ['[', '['], [']', ']'], ['#', '#'],
   ];
-  const QUICK_KEYS = IS_PY ? PY_KEYS : CPP_KEYS;
+  const IS_JS = typeof Lang !== 'undefined' && Lang.current() === 'javascript';
+  const JS_KEYS = [
+    ['Tab', () => insertIndent()], ['{', '{'], ['}', '}'], ['(', '('], [')', ')'], [';', ';'],
+    ['\"', '\"'], ['=', ' = '], ['===', ' === '], ['>=', ' >= '], ['<=', ' <= '], ['>', '>'], ['<', '<'],
+    ['++', '++'], ['--', '--'], ['.', '.'], ['[', '['], [']', ']'], ['+', ' + '], ['*', ' * '],
+  ];
+  const QUICK_KEYS = IS_PY ? PY_KEYS : IS_JS ? JS_KEYS : CPP_KEYS;
+  // Python dan JavaScript: panduan nyimpen jorokan tiap baris, jadi Enter ngikutin panduan.
+  const GUIDE_INDENT = IS_PY || IS_JS;
 
   // ---------- Pewarnaan sintaks (gaya VS Code, tanpa warna merah) ----------
   // Teks asli di textarea dibikin transparan, warnanya digambar di lapisan
@@ -45,6 +53,13 @@ const CodeEditor = (() => {
       std: split('cout cin endl cerr'),
       re: /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(#[ \t]*[A-Za-z]+(?:[ \t]*<[^>\n]*>?)?)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|(<<|>>|<=|>=|==|!=|\+\+|--|&&|\|\||[-+*/%=<>!&|^~?:])/g,
     },
+    javascript: {
+      kw: split('if else for while do return function let const var new class break continue switch case of in typeof'),
+      types: split('Array Object String Number Boolean Math'),
+      consts: split('true false null undefined'),
+      std: split('console'),
+      re: /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(\b\B)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?|`(?:\\.|[^`\\])*`?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_$][\w$]*)|(===|!==|=>|<=|>=|==|!=|\+\+|--|&&|\|\||[-+*/%=<>!&|^~?:])/g,
+    },
     python: {
       kw: split('if elif else for while in def return import from as class pass break continue and or not is'),
       types: split('int str float bool list dict set tuple'),
@@ -56,7 +71,7 @@ const CodeEditor = (() => {
   const escHtml = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   function highlight(code) {
-    const L = IS_PY ? HL_LANG.python : HL_LANG.cpp;
+    const L = IS_PY ? HL_LANG.python : IS_JS ? HL_LANG.javascript : HL_LANG.cpp;
     const re = L.re;
     re.lastIndex = 0;
     let out = '';
@@ -373,7 +388,7 @@ const CodeEditor = (() => {
     // harus lanjut. Cuma kalau kursor di baris terakhir.
     if (complete) {
       const next = missing.slice(completeIdx + 1)[0] || missing.find((_, i) => i !== completeIdx);
-      if (next && cursorIdx === lines.length - 1 && placeHint(upToCaret, next, '', true, '', false)) return;
+      if (next && cursorIdx === lines.length - 1 && placeHint(upToCaret, enterIndent(value, start) + next.trimStart(), '', true, '', false)) return;
       none();
       return;
     }
@@ -604,6 +619,27 @@ const CodeEditor = (() => {
     insert(INDENT);
   }
 
+  // Jorokan yang bakal dipasang Enter di baris baru. Dipakai Enter dan juga
+  // ghost baris berikutnya, jadi posisi ghost sebelum dan sesudah Enter selalu sama.
+  function enterIndent(value, start) {
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+    const rawIndent = (value.slice(lineStart, start).match(/^[ \t]*/) || [''])[0];
+    const indent = rawIndent.slice(0, MAX_INDENT);
+    const canDeepen = indent.length + INDENT.length <= MAX_INDENT;
+    const prev = value[start - 1];
+
+    // Python/JS + panduan nyala: jorokan baris baru ngikutin baris panduan berikutnya,
+    // jadi else, } dan dedent habis def/for mendarat di kolom yang bener.
+    if (GUIDE_INDENT && ghostEnabled && ghostLines.length) {
+      const cur = compact(value.slice(lineStart, start));
+      const gi = cur ? ghostLines.findIndex((l) => compact(l) === cur) : -1;
+      if (gi >= 0 && gi + 1 < ghostLines.length) {
+        return (ghostLines[gi + 1].match(/^ */) || [''])[0].slice(0, MAX_INDENT);
+      }
+    }
+    return indent + ((prev === '{' || (IS_PY && prev === ':')) && canDeepen ? INDENT : '');
+  }
+
   // Enter: lanjutin indent baris sebelumnya. Habis "{" tambah satu level.
   // Pakai beforeinput biar jalan juga di keyboard HP.
   function handleEnter(event) {
@@ -622,17 +658,6 @@ const CodeEditor = (() => {
     const celebrate = fxOn && isGuideLine(value.slice(lineStart, start));
     const where = celebrate ? caretXY() : null;
 
-    // Python + panduan nyala: jorokan baris baru ngikutin baris panduan berikutnya,
-    // jadi else, dedent habis def/for, dst. mendarat di kolom yang bener.
-    let guideIndent = null;
-    if (IS_PY && ghostEnabled && ghostLines.length) {
-      const cur = compact(value.slice(lineStart, start));
-      const gi = cur ? ghostLines.findIndex((l) => compact(l) === cur) : -1;
-      if (gi >= 0 && gi + 1 < ghostLines.length) {
-        guideIndent = (ghostLines[gi + 1].match(/^ */) || [''])[0].slice(0, MAX_INDENT);
-      }
-    }
-
     event.preventDefault();
     if (prev === '{' && next === '}') {
       const inner = canDeepen ? INDENT : '';
@@ -640,9 +665,7 @@ const CodeEditor = (() => {
       const caret = start + 1 + indent.length + inner.length;
       ta.setSelectionRange(caret, caret);
     } else {
-      insert('\n' + (guideIndent !== null
-        ? guideIndent
-        : indent + ((prev === '{' || (IS_PY && prev === ':')) && canDeepen ? INDENT : '')));
+      insert('\n' + enterIndent(value, start));
     }
     if (celebrate) lineDone(where, lineIdx);
   }
