@@ -405,25 +405,29 @@ const Sound = (() => {
     sinceLast: () => performance.now() - lastSfx,
     // Tombol simbol di bawah editor: tik lebih pendek dan tinggi.
     key() {
-      const r = 0.94 + Math.random() * 0.12;
-      burst({ dur: 0.018, from: 5200, to: 2400, vol: 0.07 });
-      tone({ type: 'square', from: 1250 * r, to: 900 * r, dur: 0.035, vol: 0.045 });
+      // "tok" ketukan keyboard: percikan noise + ketukan nada turun.
+      const r = 0.92 + Math.random() * 0.16;
+      burst({ dur: 0.022, from: 4200, to: 1800, vol: 0.11 });
+      tone({ type: 'triangle', from: 760 * r, to: 380 * r, dur: 0.04, vol: 0.14 });
     },
-    // Tombol utama (Jalankan, Main, Mulai): "ba-ding" kayak ngambil koin.
+    // Tombol utama (Jalankan, Main, Mulai): arpeggio naik 4 nada kayak power-up,
+    // nada terakhir menggantung, ada percikan di ujungnya.
     confirm() {
-      burst({ dur: 0.02, from: 6000, to: 3000, vol: 0.06 });
-      tone({ type: 'triangle', from: 260, to: 130, dur: 0.07, vol: 0.2 });
-      tone({ type: 'square', from: 988, to: 988, dur: 0.07, vol: 0.07 });
-      tone({ type: 'square', from: 1319, to: 1319, start: 0.065, dur: 0.24, vol: 0.07 });
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const last = i === 3;
+        tone({ type: 'square', from: f, to: f, start: i * 0.055, dur: last ? 0.3 : 0.07, vol: 0.085 });
+      });
+      tone({ type: 'triangle', from: 262, to: 131, dur: 0.14, vol: 0.28 });
+      burst({ start: 0.16, dur: 0.22, from: 9000, to: 4500, vol: 0.035 });
     },
-    // Klik tombol menu.
-    // Tombol biasa: ketukan "pop" (badan rendah + percikan tinggi + klik tipis).
-    // Nadanya digeser dikit tiap kali biar ga membosankan.
+    // Tombol biasa: "blip-blip" naik dua nada kayak pilih menu di game NES,
+    // plus badan rendah biar terasa ditekan. Nadanya geser dikit tiap kali.
     click() {
-      const r = 0.96 + Math.random() * 0.08;
-      burst({ dur: 0.02, from: 6000, to: 3000, vol: 0.05 });
-      tone({ type: 'triangle', from: 320 * r, to: 150 * r, dur: 0.07, vol: 0.2 });
-      tone({ type: 'square', from: 880 * r, to: 1320 * r, dur: 0.05, vol: 0.055 });
+      const r = 0.97 + Math.random() * 0.06;
+      tone({ type: 'square', from: 660 * r, to: 660 * r, dur: 0.045, vol: 0.09 });
+      tone({ type: 'square', from: 990 * r, to: 990 * r, start: 0.045, dur: 0.08, vol: 0.09 });
+      tone({ type: 'triangle', from: 240 * r, to: 110 * r, dur: 0.09, vol: 0.25 });
+      burst({ dur: 0.015, from: 7000, to: 3500, vol: 0.04 });
     },
     // Tirai transisi menyapu layar.
     whoosh() { burst({ dur: 0.5, from: 5000, to: 400, vol: 0.12 }); },
