@@ -23,7 +23,7 @@ const LEVELS_PY = [
   }),
   py(3, {
     task: 'Fork Wraith berdiri di persimpangan dan selalu milih salah satu jalan. Buat variable nilai = 80. Kalau nilai >= 75 (lebih dari atau sama dengan: ketik tanda > lalu tanda =), tampilkan "Lulus". Kalau tidak, tampilkan "Remedial".',
-    ghost: ['nilai = 80', 'if nilai >= 75:', 'print("Lulus")', 'else:', 'print("Remedial")'],
+    ghost: ['nilai = 80', 'if nilai >= 75:', '    print("Lulus")', 'else:', '    print("Remedial")'],
     requires: [
       { pattern: /nilai\s*=\s*80/, message: 'Outputnya udah bener, tapi bikin dulu variable-nya ya: nilai = 80' },
       { pattern: /if\s+[^\n:]*nilai[^\n:]*:/, message: 'Hampir! Pilih jalannya pakai if ... : yang ngecek nilai, jangan langsung print "Lulus".' },
@@ -32,13 +32,13 @@ const LEVELS_PY = [
   }),
   py(4, {
     task: 'Loop Serpent muter terus tanpa henti. Hentikan pakai for. Tampilkan angka 1 sampai 5, satu angka per baris.',
-    ghost: ['for i in range(1, 6):', 'print(i)'],
+    ghost: ['for i in range(1, 6):', '    print(i)'],
     requires: [{ pattern: /for\s+\w+\s+in\b/, message: 'Outputnya bener, tapi pakai for ya. Ular ini cuma tumbang sama loop.' }],
   }),
   py(5, {
     concept: 'function',
     task: 'Function Golem cuma bisa digerakkan lewat perintah bernama (function). Buat function bernama sapa yang menampilkan "Halo Golem", lalu panggil function itu dua kali.',
-    ghost: ['def sapa():', 'print("Halo Golem")', 'sapa()', 'sapa()'],
+    ghost: ['def sapa():', '    print("Halo Golem")', 'sapa()', 'sapa()'],
     requires: [
       { pattern: /def\s+sapa\s*\(\s*\)\s*:/, message: 'Outputnya udah bener, tapi bikin dulu function-nya ya: def sapa():' },
       { pattern: /^sapa\(\)[ \t]*$[\s\S]*^sapa\(\)[ \t]*$/m, message: 'Function-nya harus dipanggil dua kali, masing-masing di barisnya sendiri: sapa()' },
@@ -56,7 +56,7 @@ const LEVELS_PY = [
   py(7, {
     concept: 'while loop',
     task: 'While Drake menyerang selama masih ada tenaga. Buat variable n = 3. Selama n >= 1, tampilkan n lalu kurangi n sebanyak 1. Hasilnya hitung mundur 3, 2, 1 (satu angka per baris).',
-    ghost: ['n = 3', 'while n >= 1:', 'print(n)', 'n -= 1'],
+    ghost: ['n = 3', 'while n >= 1:', '    print(n)', '    n -= 1'],
     requires: [
       { pattern: /\bn\s*=\s*3/, message: 'Outputnya udah bener, tapi bikin dulu variable-nya ya: n = 3' },
       { pattern: /while\s+[^\n:]+:/, message: 'Hampir! Naga ini cuma tumbang sama while. Pakai while ... :' },
@@ -67,7 +67,7 @@ const LEVELS_PY = [
     boss: { ...LEVELS[8].boss, name: 'Class Knight' },
     task: 'Class Knight kebal sama data yang berserakan. Buat class bernama Ksatria yang punya nama dan hp (isi lewat __init__). Bikin satu Ksatria dengan nama "Arthur" dan hp 100, lalu tampilkan: Arthur 100',
     expected: 'Arthur 100',
-    ghost: ['class Ksatria:', 'def __init__(self, nama, hp):', 'self.nama = nama', 'self.hp = hp', 'k = Ksatria("Arthur", 100)', 'print(k.nama, k.hp)'],
+    ghost: ['class Ksatria:', '    def __init__(self, nama, hp):', '        self.nama = nama', '        self.hp = hp', 'k = Ksatria("Arthur", 100)', 'print(k.nama, k.hp)'],
     requires: [
       { pattern: /class\s+Ksatria\s*:/, message: 'Outputnya udah bener, tapi bikin dulu class-nya ya: class Ksatria:' },
       { pattern: /Ksatria\s*\(\s*["']Arthur["']\s*,\s*100\s*\)/, message: 'Bikin ksatrianya dari class: k = Ksatria("Arthur", 100)' },
@@ -77,7 +77,7 @@ const LEVELS_PY = [
     concept: 'gabungan',
     boss: { ...LEVELS[9].boss, name: 'Traceback Dragon' },
     task: 'Boss terakhir! Traceback Dragon cuma kalah sama gabungan jurusmu. Buat function tambah(a, b) yang mengembalikan a + b. Lalu buat total = 0. Pakai for dari 1 sampai 3, dan tiap putaran isi total dengan tambah(total, i). Tampilkan total di akhir.',
-    ghost: ['def tambah(a, b):', 'return a + b', 'total = 0', 'for i in range(1, 4):', 'total = tambah(total, i)', 'print(total)'],
+    ghost: ['def tambah(a, b):', '    return a + b', 'total = 0', 'for i in range(1, 4):', '    total = tambah(total, i)', 'print(total)'],
     requires: [
       { pattern: /def\s+tambah\s*\(\s*\w+\s*,\s*\w+\s*\)\s*:/, message: 'Hasilnya bener, tapi bikin dulu function-nya ya: def tambah(a, b):' },
       { pattern: /for\s+\w+\s+in\b/, message: 'Naga ini juga lemah sama for. Pakai for buat ngulang dari 1 sampai 3.' },
@@ -431,6 +431,8 @@ const PyErrors = (() => {
       message = 'Tanda kutip penutup (") belum ada di baris ini. Teks harus diapit dua tanda kutip.';
     } else if (/unexpected EOF|was never closed/.test(text)) {
       message = 'Kodenya belum selesai. Cek ada kurung ( yang belum ditutup ).';
+    } else if (kind === 'SyntaxError' && /^\s+(?:else|elif)\b/.test(lines[line - 1] || '')) {
+      message = 'else (atau elif) harus sejajar sama if-nya, sama-sama mepet kiri. Jangan dijorokin ke dalam blok if.';
     } else if (kind === 'IndentationError' && /expected an indented block/.test(text)) {
       message = 'Baris di bawah titik dua (:) harus menjorok ke dalam. Tekan Tab, atau ketik 4 spasi.';
     } else if (kind === 'IndentationError' && /unexpected indent/.test(text)) {

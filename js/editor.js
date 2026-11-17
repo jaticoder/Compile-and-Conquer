@@ -326,21 +326,34 @@ const CodeEditor = (() => {
       return;
     }
 
-    const beforeCaret = lineText.slice(0, col).trimStart();
+    const rawBefore = lineText.slice(0, col);
+    const beforeCaret = rawBefore.trimStart();
     const typed = beforeCaret.trim();
+    // Spasi indent yang udah ada di kiri kursor (diketik user atau disisipin
+    // Enter otomatis). Ghost ga boleh ngulang indent itu lagi.
+    const leadWs = rawBefore.length - beforeCaret.length;
     // Kalau user baru ketik spasi, ghost ga boleh ikut nambah spasi lagi.
-    const spaced = /\s$/.test(beforeCaret);
+    const spaced = /\s$/.test(rawBefore);
     const missing = missingLines(lines, cursorIdx);
 
     let match = null;     // baris panduan yang lagi diikuti
     let rest = null;      // sisanya (buat ditampilin inline)
     let restRaw = null;   // sisanya sebelum spasi depan dibuang
     let complete = false; // baris di kursor udah persis sama satu baris panduan
+    let completeIdx = -1; // urutan baris panduan yang persis sama itu di `missing`
+    let idx = -1;
     for (const line of missing) {
-      const left = typed === '' ? line : remainderAfter(line, typed);
-      if (left === '') complete = true;
+      idx++;
+      // Baris kosong (cuma indent): lewati indent panduan sebanyak spasi yang udah ada.
+      const left = typed === ''
+        ? line.slice(Math.min(leadWs, (line.match(/^ */) || [''])[0].length))
+        : remainderAfter(line, typed);
+      if (left === '') {
+        complete = true;
+        if (completeIdx < 0) completeIdx = idx;
+      }
       let shown = left;
-      if (shown && spaced) shown = shown.replace(/^ +/, '');
+      if (shown && spaced && typed !== '') shown = shown.replace(/^ +/, '');
       if (shown) {
         match = line;
         restRaw = left;
@@ -355,8 +368,12 @@ const CodeEditor = (() => {
       return;
     }
 
-    // Baris ini udah bener dan lengkap: ga ada yang perlu ditampilkan.
+    // Baris ini udah bener dan lengkap: tunjukin baris panduan berikutnya di
+    // baris bawahnya (abu-abu, lengkap dengan jorokannya), biar pemain tau
+    // harus lanjut. Cuma kalau kursor di baris terakhir.
     if (complete) {
+      const next = missing.slice(completeIdx + 1)[0] || missing.find((_, i) => i !== completeIdx);
+      if (next && cursorIdx === lines.length - 1 && placeHint(upToCaret, next, '', true, '', false)) return;
       none();
       return;
     }
@@ -605,6 +622,17 @@ const CodeEditor = (() => {
     const celebrate = fxOn && isGuideLine(value.slice(lineStart, start));
     const where = celebrate ? caretXY() : null;
 
+    // Python + panduan nyala: jorokan baris baru ngikutin baris panduan berikutnya,
+    // jadi else, dedent habis def/for, dst. mendarat di kolom yang bener.
+    let guideIndent = null;
+    if (IS_PY && ghostEnabled && ghostLines.length) {
+      const cur = compact(value.slice(lineStart, start));
+      const gi = cur ? ghostLines.findIndex((l) => compact(l) === cur) : -1;
+      if (gi >= 0 && gi + 1 < ghostLines.length) {
+        guideIndent = (ghostLines[gi + 1].match(/^ */) || [''])[0].slice(0, MAX_INDENT);
+      }
+    }
+
     event.preventDefault();
     if (prev === '{' && next === '}') {
       const inner = canDeepen ? INDENT : '';
@@ -612,7 +640,9 @@ const CodeEditor = (() => {
       const caret = start + 1 + indent.length + inner.length;
       ta.setSelectionRange(caret, caret);
     } else {
-      insert('\n' + indent + ((prev === '{' || (IS_PY && prev === ':')) && canDeepen ? INDENT : ''));
+      insert('\n' + (guideIndent !== null
+        ? guideIndent
+        : indent + ((prev === '{' || (IS_PY && prev === ':')) && canDeepen ? INDENT : '')));
     }
     if (celebrate) lineDone(where, lineIdx);
   }

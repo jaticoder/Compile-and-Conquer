@@ -61,6 +61,12 @@
     chapters: $('chapters'),
     chapterGrid: $('chapterGrid'),
     chaptersBack: $('chaptersBack'),
+    // pilih level
+    stages: $('stages'),
+    stageGrid: $('stageGrid'),
+    stagesSub: $('stagesSub'),
+    stagesBack: $('stagesBack'),
+    stagesSwap: $('stagesSwap'),
     // transisi
     wipe: $('wipe'),
     scrim: $('scrim'),
@@ -89,6 +95,7 @@
   }
 
   function saveProgress(index) {
+    Lang.syncBest(); // level tertinggi dicatat dulu, biar ga hilang kalau index turun
     try {
       localStorage.setItem(STORAGE_KEY, String(index));
     } catch (err) { /* abaikan */ }
@@ -194,7 +201,7 @@
 
     els.hudTier.textContent = TIER_LABEL[level.tier];
     els.hudLevel.textContent = `Level ${levelIndex + 1} dari ${LEVELS.length}`;
-    els.coinCount.textContent = String(levelIndex);
+    els.coinCount.textContent = String(Lang.progress(Lang.current()).beaten);
     resetHp();
     els.stage.className = `stage tier-${level.tier}`;
     Sound.setMood(level.tier);
@@ -494,6 +501,8 @@
 
   async function winSequence(output) {
     const text = output.trim().split('\n')[0].slice(0, 18);
+    // Boss ini kalah: level berikutnya kebuka (level lama yang diulang ga nurunin apa-apa).
+    Lang.unlock(Math.min(levelIndex + 1, LEVELS.length - 1));
     await bringStageIntoView();
 
     const heroBox = box(els.hero);
@@ -527,7 +536,7 @@
     burst(to.x, to.y, 14, 80, ['#ffffff', '#f5c22e', '#2ee6a6']);
     showPop(text, bossBox.x, bossBox.top - 10);
     els.hpFill.style.width = '0%';
-    els.coinCount.textContent = String(levelIndex + 1);
+    els.coinCount.textContent = String(Math.max(Lang.progress(Lang.current()).beaten, levelIndex + 1));
     restartClass(els.coins, 'bump');
     await wait(500);
     els.boss.classList.remove('hit');
@@ -621,10 +630,52 @@
     await winSequence(result.stdout);
   }
 
+  // Kode belum selesai? Dicek di browser, ga perlu kirim ke Judge0.
+  // Pesannya sengaja ga nyebut baris berikutnya, cuma bilang masih ada lanjutan.
+  function unfinishedHint(level, code) {
+    const squash = (s) => s.replace(/\s+/g, '');
+    const mine = code.split('\n').filter((l) => l.trim());
+    const guide = (level.ghost || []).filter((l) => l.trim());
+    if (!mine.length) return null;
+
+    // 1. Semua baris cocok urut dengan awal panduan, tapi panduan masih lebih panjang.
+    if (guide.length > mine.length) {
+      const prefix = mine.every((line, i) => {
+        const a = squash(line);
+        const b = squash(guide[i]);
+        return a === b || (a.startsWith('#include') && b.startsWith('#include'));
+      });
+      if (prefix) {
+        return `Kodemu baru ${mine.length} baris dan belum selesai. Masih ada lanjutannya di bawah.`;
+      }
+    }
+
+    // 2. Python: baris berakhir ':' tapi ga ada isinya.
+    if (Lang.current() === 'python' && /:\s*$/.test(mine[mine.length - 1])) {
+      return 'Baris terakhir berakhir dengan titik dua (:). Artinya harus ada isinya di bawah, dijorokin ke dalam.';
+    }
+
+    // 3. C++: kurung kurawal buka lebih banyak dari tutup.
+    if (Lang.current() === 'cpp') {
+      const open = (code.match(/\{/g) || []).length;
+      const close = (code.match(/\}/g) || []).length;
+      if (open > close) return 'Ada { yang belum ditutup }. Kodenya belum selesai.';
+    }
+
+    return null;
+  }
+
   async function handleRun() {
     if (busy || transitioning) return;
     if (!CodeEditor.getCode().trim()) {
       showConsole('error', 'Editornya masih kosong', 'Ketik kodenya dulu, mulai dari #include <iostream>. Nyalain panduan abu-abu kalau bingung.');
+      Sound.wrong();
+      failImpact();
+      return;
+    }
+    const unfinished = unfinishedHint(LEVELS[levelIndex], CodeEditor.getCode());
+    if (unfinished) {
+      showConsole('error', 'Kodenya belum selesai', unfinished);
       Sound.wrong();
       failImpact();
       return;
@@ -651,8 +702,105 @@
 
   // ---------- Lobby ----------
 
+  // Main selalu ngebuka pilihan level (kecuali pemain baru, lihat playBtn di init).
   function paintPlay() {
-    els.playBtn.textContent = inGame || levelIndex > 0 ? 'Lanjut' : 'Main';
+    els.playBtn.textContent = 'Main';
+  }
+
+  // ---------- Pilih level ----------
+  // Level yang udah dikalahkan bisa dimainkan lagi. Level berikutnya kebuka,
+  // sisanya terkunci sampai boss sebelumnya kalah.
+
+  function buildStages() {
+    const lang = Lang.current();
+    const prog = Lang.progress(lang);
+    const open = prog.finished ? LEVELS.length - 1 : Lang.unlocked(lang);
+    els.stagesSub.textContent = `Bab ${Lang.info().label}. Level yang udah kamu kalahkan bisa dimainkan lagi.`;
+    els.stageGrid.textContent = '';
+
+    LEVELS.forEach((level, i) => {
+      const state = i < prog.beaten ? 'done' : i === open ? 'next' : 'locked';
+      const playing = inGame && i === levelIndex;
+
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = `stage-tile ${state}${playing ? ' now' : ''}`;
+      tile.disabled = state === 'locked';
+
+      const thumb = document.createElement('span');
+      thumb.className = 'st-thumb';
+      setSprite(thumb, level.boss.sprite, level.boss.emoji, state === 'locked' ? '' : level.boss.name);
+      tile.appendChild(thumb);
+
+      const num = document.createElement('span');
+      num.className = 'st-num';
+      num.textContent = `Level ${i + 1}`;
+      tile.appendChild(num);
+
+      const name = document.createElement('span');
+      name.className = 'st-name';
+      name.textContent = state === 'locked' ? '???' : level.boss.name;
+      tile.appendChild(name);
+
+      const concept = document.createElement('span');
+      concept.className = 'st-concept';
+      concept.textContent = state === 'locked' ? 'Terkunci' : level.concept;
+      tile.appendChild(concept);
+
+      const tag = document.createElement('span');
+      tag.className = 'st-tag';
+      tag.textContent = playing ? 'Lagi dimainkan' : state === 'done' ? 'Sudah kalah' : state === 'next' ? 'Berikutnya' : '';
+      if (tag.textContent) tile.appendChild(tag);
+
+      tile.setAttribute('aria-label', `Level ${i + 1}, ${state === 'locked' ? 'terkunci' : level.boss.name}`);
+      if (state !== 'locked') tile.addEventListener('click', () => playLevel(i));
+      els.stageGrid.appendChild(tile);
+    });
+  }
+
+  function openStages() {
+    buildStages();
+    els.stages.hidden = false;
+    anim(els.stages, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
+    anim(els.stageGrid, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 60, easing: 'ease-out', fill: 'backwards' });
+    const target = els.stageGrid.querySelector('.stage-tile.next:not(:disabled)') || els.stageGrid.querySelector('.stage-tile:not(:disabled)');
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  function closeStages() {
+    els.stages.hidden = true;
+  }
+
+  // Main main dari level `index`. Tiga kemungkinan:
+  //   - game lagi jalan dan levelnya sama: tutup menu aja
+  //   - game belum jalan: pasang level lalu mulai biasa (tirai, hero jalan masuk)
+  //   - game lagi jalan di level lain: tirai nutup, pindah level, hero jalan masuk
+  async function playLevel(index) {
+    if (transitioning || busy) return;
+    closeStages();
+    if (inGame && index === levelIndex) { startGame(); return; }
+    if (!inGame) {
+      levelIndex = index;
+      saveProgress(index);
+      startGame();
+      return;
+    }
+
+    transitioning = true;
+    Sound.unlock();
+    els.lobby.classList.remove('boot');
+    els.lobby.classList.add('leaving');
+    restartClass(els.lobbyHero, 'attack');
+    await wait(reduceMotion ? 0 : 380);
+    await cover();
+    els.lobby.hidden = true;
+    els.lobby.classList.remove('leaving');
+    document.body.dataset.view = 'game';
+    window.scrollTo(0, 0);
+    levelIndex = index;
+    saveProgress(index);
+    renderLevel(true);
+    await enterLevel();
   }
 
   // ---------- Peta bab ----------
@@ -728,6 +876,7 @@
 
   function openChapters() {
     if (transitioning && els.chapters.hidden) return;
+    closeStages();
     buildChapters();
     els.chapters.hidden = false;
     anim(els.chapters, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
@@ -746,7 +895,14 @@
       return;
     }
     closeChapters();
-    startGame();
+    openStagesOrStart();
+  }
+
+  // Bab sudah pernah dimainkan: pilih level dulu. Bab yang masih kosong: langsung mulai.
+  function openStagesOrStart() {
+    const prog = Lang.progress(Lang.current());
+    if (!inGame && prog.beaten === 0 && !prog.finished) startGame();
+    else openStages();
   }
 
   function paintMute() {
@@ -930,15 +1086,19 @@
     // Lobby
     setSprite(els.lobbyHero, 'assets/hero/hero.png', '🧑‍💻', 'Hero');
     setSprite(els.lobbyBoss, LEVELS[0].boss.sprite, LEVELS[0].boss.emoji, LEVELS[0].boss.name);
-    // Main pertama kali buka peta bab. Kalau udah ada progress atau lagi di tengah game, langsung lanjut.
+    // Main buka pilihan level. Pemain baru (belum milih bab dan belum ada progress) lewat peta bab dulu.
     els.playBtn.addEventListener('click', () => {
-      if (inGame || levelIndex > 0) startGame();
-      else openChapters();
+      const fresh = !inGame && !Lang.chosen() && Lang.progress(Lang.current()).beaten === 0;
+      if (fresh) openChapters();
+      else openStagesOrStart();
     });
+    els.stagesBack.addEventListener('click', () => { Sound.click(); closeStages(); els.playBtn.focus({ preventScroll: true }); });
+    els.stagesSwap.addEventListener('click', () => { Sound.click(); closeStages(); openChapters(); });
     els.mapBtn.addEventListener('click', () => { Sound.click(); openChapters(); });
     els.chaptersBack.addEventListener('click', () => { Sound.click(); closeChapters(); els.mapBtn.focus({ preventScroll: true }); });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !els.chapters.hidden) { closeChapters(); els.mapBtn.focus({ preventScroll: true }); }
+      else if (event.key === 'Escape' && !els.stages.hidden) { closeStages(); els.playBtn.focus({ preventScroll: true }); }
     });
     els.settingsBtn.addEventListener('click', () => { Sound.click(); showSettings(true); });
     els.settingsBack.addEventListener('click', () => { Sound.click(); showSettings(false); });
@@ -973,7 +1133,9 @@
     // Habis pilih bahasa lain di peta bab: halaman dimuat ulang, langsung masuk game.
     if (Lang.consumeAutostart()) {
       els.lobby.classList.remove('boot');
-      startGame(true);
+      const prog = Lang.progress(Lang.current());
+      if (prog.beaten === 0 && !prog.finished) startGame(true);
+      else openStages();
     }
   }
 

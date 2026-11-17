@@ -1771,3 +1771,116 @@ body.lesson-open { overflow: hidden; }
   .ch-name { font-size: 13px; }
   .ch-blurb { font-size: 15px; }
 }
+
+
+/* ============================================================
+   Pilih level (v27)
+   Kotak per level. Sudah kalah = bisa diulang, berikutnya = bingkai
+   emas, terkunci = siluet boss dan ga bisa diklik.
+   ============================================================ */
+.chapters,
+.stages {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  overflow-y: auto;
+  padding: 28px 20px 40px;
+  background: var(--night-2);
+}
+
+.stages[hidden] { display: none; }
+.stages h2 {
+  margin: 0 0 12px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(18px, 4vw, 28px);
+  line-height: 1.4;
+  color: var(--coin);
+  text-shadow: 3px 3px 0 #2a1208;
+  text-align: center;
+}
+
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 22px;
+  width: 100%;
+  margin-bottom: 34px;
+}
+
+.stage-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px 10px 14px;
+  text-align: center;
+  color: var(--paper);
+  background: var(--plank);
+  border: 0;
+  --c: var(--plank-line);
+  box-shadow:
+    0 -4px 0 0 var(--c),
+    0 4px 0 0 var(--c),
+    -4px 0 0 0 var(--c),
+    4px 0 0 0 var(--c),
+    0 8px 0 0 #2a1208;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.stage-tile:hover:not(:disabled),
+.stage-tile:focus-visible { --c: var(--coin); transform: translateY(-4px); }
+.stage-tile:active:not(:disabled) { transform: translateY(2px); }
+.stage-tile.done { --c: #3f8f4a; }
+.stage-tile.next { --c: var(--coin); }
+.stage-tile.now { background: #4a3328; }
+.stage-tile.locked { cursor: not-allowed; background: #241d2b; --c: #3a3560; }
+
+.st-thumb {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 2px;
+}
+.st-thumb img { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+.st-thumb .fallback { font-size: 44px; line-height: 1; }
+.stage-tile.locked .st-thumb { filter: brightness(0); opacity: 0.35; }
+
+.st-num { font-family: var(--display); font-size: 10px; line-height: 1.4; color: var(--coin); }
+.st-name { font-family: var(--body); font-size: 16px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.st-concept { font-family: var(--body); font-size: 14px; color: var(--muted); }
+.stage-tile.locked .st-name,
+.stage-tile.locked .st-concept { color: #6f6a92; }
+
+.st-tag {
+  margin-top: 2px;
+  padding: 2px 8px 3px;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f2b14;
+  background: var(--ok);
+}
+.stage-tile.next .st-tag { background: var(--coin); color: #2b1a05; }
+.stage-tile.now .st-tag { background: var(--paper); color: #3a2412; }
+
+.stages-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
+
+@media (max-width: 1000px) {
+  .stage-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+}
+
+@media (max-width: 860px) {
+  .stages { padding: 20px 16px 28px; }
+  .stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 26px; }
+  .st-thumb { width: 60px; height: 60px; }
+  .st-thumb .fallback { font-size: 38px; }
+  .stage-tile { padding: 12px 8px 12px; }
+  .st-name { font-size: 15px; }
+  .stages-actions { gap: 20px; }
+}
