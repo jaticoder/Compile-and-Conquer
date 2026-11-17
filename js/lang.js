@@ -39,8 +39,6 @@ const Lang = (() => {
 (() => {
   const info = Lang.info();
   document.title = `Compile & Conquer: ${info.label}`;
-  const tag = document.querySelector('.lobby-tag');
-  if (tag) tag.textContent = `Belajar ${info.label} sambil ngalahin boss`;
   const note = document.querySelector('.quest .note');
   if (note) {
     note.textContent = '';

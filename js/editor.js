@@ -32,9 +32,72 @@ const CodeEditor = (() => {
   ];
   const QUICK_KEYS = IS_PY ? PY_KEYS : CPP_KEYS;
 
+  // ---------- Pewarnaan sintaks (gaya VS Code, tanpa warna merah) ----------
+  // Teks asli di textarea dibikin transparan, warnanya digambar di lapisan
+  // .ed-hl tepat di belakangnya. Palet sengaja tanpa merah, biar kode yang
+  // benar ga kelihatan kayak salah.
+  const split = (w) => new Set(w.split(' '));
+  const HL_LANG = {
+    cpp: {
+      kw: split('if else for while do return using namespace switch case break continue const new delete class struct public private'),
+      types: split('int float double char bool string long short unsigned void auto size_t'),
+      consts: split('true false nullptr NULL'),
+      std: split('cout cin endl cerr'),
+      re: /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(#[ \t]*[A-Za-z]+(?:[ \t]*<[^>\n]*>?)?)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|(<<|>>|<=|>=|==|!=|\+\+|--|&&|\|\||[-+*/%=<>!&|^~?:])/g,
+    },
+    python: {
+      kw: split('if elif else for while in def return import from as class pass break continue and or not is'),
+      types: split('int str float bool list dict set tuple'),
+      consts: split('True False None'),
+      std: split('print'),
+      re: /(#[^\n]*)|(\b\B)|("""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|(==|!=|<=|>=|\*\*|\/\/|[-+*/%=<>!:])/g,
+    },
+  };
+  const escHtml = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  function highlight(code) {
+    const L = IS_PY ? HL_LANG.python : HL_LANG.cpp;
+    const re = L.re;
+    re.lastIndex = 0;
+    let out = '';
+    let last = 0;
+    let m;
+    while ((m = re.exec(code))) {
+      out += escHtml(code.slice(last, m.index));
+      last = re.lastIndex;
+      const t = m[0];
+      if (m[2] !== undefined) {
+        // #include <iostream>: kata #include dan nama header beda warna.
+        const parts = t.match(/^(#[ \t]*\w+)([ \t]*)(<[^>\n]*>?)?$/);
+        out += `<span class="tp">${escHtml(parts[1])}</span>${parts[2]}`;
+        if (parts[3]) out += `<span class="ts">${escHtml(parts[3])}</span>`;
+        continue;
+      }
+      let cls = '';
+      if (m[1] !== undefined) cls = 'tc';
+      else if (m[3] !== undefined) cls = 'ts';
+      else if (m[4] !== undefined) cls = 'tn';
+      else if (m[6] !== undefined) cls = 'to';
+      else if (m[5] !== undefined) {
+        if (L.kw.has(t)) cls = 'tk';
+        else if (L.consts.has(t)) cls = 'tn';
+        else if (L.std.has(t) || /^[ \t]*\(/.test(code.slice(last, last + 40))) cls = 'tf';
+        else if (L.types.has(t)) cls = 'tt';
+      }
+      out += cls ? `<span class="${cls}">${escHtml(t)}</span>` : escHtml(t);
+    }
+    // Baris kosong di ujung ikut dihitung, biar tinggi gulungannya sama kayak textarea.
+    return out + escHtml(code.slice(last)) + '\n ';
+  }
+
+  function paintHl() {
+    if (hl) hl.innerHTML = highlight(ta.value);
+  }
+
 
   let ta = null;      // textarea
   let mirror = null;  // lapisan cermin
+  let hl = null;      // lapisan warna sintaks
   let before = null;  // teks sebelum kursor (transparan)
   let caretMark = null; // penanda posisi kursor (lebar nol)
   let ghost = null;   // teks ghost
@@ -342,6 +405,8 @@ const CodeEditor = (() => {
   function syncScroll() {
     mirror.scrollTop = ta.scrollTop;
     mirror.scrollLeft = ta.scrollLeft;
+    hl.scrollTop = ta.scrollTop;
+    hl.scrollLeft = ta.scrollLeft;
     gutter.scrollTop = ta.scrollTop;
     paintError();
   }
@@ -488,6 +553,7 @@ const CodeEditor = (() => {
   }
 
   function onChange() {
+    paintHl();
     errLine = 0; // user mulai ngedit: tandanya hilang
     paintError();
     updateGutter();
@@ -596,6 +662,7 @@ const CodeEditor = (() => {
         <div class="ed-body">
          <div class="ed-stack">
           <div class="ed-errline" aria-hidden="true"></div>
+          <pre class="ed-hl" aria-hidden="true"></pre>
           <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-caret" style="display:inline-block;width:0;height:1em"></span><span class="ed-ghost"></span><span class="ed-meas">MMMMMMMMMM</span></pre>
           <textarea class="ed-input" wrap="off" spellcheck="false" autocomplete="off"
             autocapitalize="off" autocorrect="off" enterkeyhint="enter"
@@ -614,6 +681,7 @@ const CodeEditor = (() => {
     errEl = host.querySelector('.ed-errline');
     gutter = host.querySelector('.ed-gutter');
     mirror = host.querySelector('.ed-mirror');
+    hl = host.querySelector('.ed-hl');
     before = host.querySelector('.ed-before');
     caretMark = host.querySelector('.ed-caret');
     ghost = host.querySelector('.ed-ghost');

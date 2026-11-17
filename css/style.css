@@ -510,6 +510,7 @@ body {
 
 .ed-body { position: relative; flex: 1; min-width: 0; }
 
+.ed-hl,
 .ed-mirror,
 .ed-input {
   position: absolute;
@@ -530,7 +531,7 @@ body {
   overflow: auto;
   resize: none;
   background: transparent;
-  color: var(--paper);
+  color: transparent; /* warnanya digambar di .ed-hl */
   caret-color: var(--coin);
   outline: none;
 }
@@ -1380,7 +1381,7 @@ body.lock { overflow: hidden; }
 .ed-body { overflow: hidden; }
 .ed-stack { position: absolute; inset: 0; --shift: 0px; transition: transform 0.12s ease-out; }
 /* Lapisan cermin dan pita error melebar ke kanan sebesar geseran, biar ga ada celah. */
-.ed-mirror, .ed-errline { right: calc(var(--shift) * -1); }
+.ed-hl, .ed-mirror, .ed-errline { right: calc(var(--shift) * -1); }
 
 /* Strip "Lanjutan" dibuat tipis: cuma satu-dua baris, tanpa judul. */
 .ed-hint { padding: 5px 10px 6px; border-top-width: 2px; }
@@ -1627,3 +1628,15 @@ body.lesson-open { overflow: hidden; }
     4px 0 0 0 var(--coin);
 }
 .lobby.leaving .lang-pick { opacity: 0; transition: opacity 0.2s ease; }
+
+/* ---------- Warna sintaks editor (palet gelap, tanpa merah) ---------- */
+.ed-hl { overflow: hidden; color: var(--paper); pointer-events: none; }
+.ed-input::selection { background: rgba(130, 170, 255, 0.35); }
+.ed-hl .tk { color: #c792ea; }                     /* if, for, return, using */
+.ed-hl .tt { color: #ffcb6b; }                     /* int, string */
+.ed-hl .tf { color: #82aaff; }                     /* print, cout, nama fungsi */
+.ed-hl .ts { color: #c3e88d; }                     /* "teks" */
+.ed-hl .tn { color: #ffb86c; }                     /* 19, true */
+.ed-hl .to { color: #89ddff; }                     /* << = + >= */
+.ed-hl .tp { color: #89ddff; }                     /* #include */
+.ed-hl .tc { color: #6b6f94; font-style: italic; } /* // komentar */
