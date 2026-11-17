@@ -83,9 +83,14 @@ const Sound = (() => {
   }
 
   // Satu nada: frekuensi meluncur dari `from` ke `to`.
+  // Waktu efek suara terakhir. Dipakai pendengar klik global di bawah biar
+  // tombol yang udah punya suara sendiri ga dobel bunyi.
+  let lastSfx = 0;
+
   function tone({ type = 'square', from, to = from, start = 0, dur = 0.15, vol = 0.12 }) {
     const ac = muted ? null : audio();
     if (!ac) return;
+    lastSfx = performance.now();
     const t = ac.currentTime + start;
     const osc = ac.createOscillator();
     const gain = ac.createGain();
@@ -103,6 +108,7 @@ const Sound = (() => {
   function burst({ start = 0, dur = 0.3, from = 2400, to = 200, vol = 0.2 }) {
     const ac = muted ? null : audio();
     if (!ac) return;
+    lastSfx = performance.now();
     const t = ac.currentTime + start;
     const src = ac.createBufferSource();
     const filter = ac.createBiquadFilter();
@@ -395,8 +401,30 @@ const Sound = (() => {
     // Ganti suasana musik sesuai tier ('basic' | 'medium' | 'expert'); berlaku di awal bar berikutnya.
     setMood(tier) { if (MOODS[tier]) pendingMood = tier; },
 
+    // Umur efek suara terakhir (ms).
+    sinceLast: () => performance.now() - lastSfx,
+    // Tombol simbol di bawah editor: tik lebih pendek dan tinggi.
+    key() {
+      const r = 0.94 + Math.random() * 0.12;
+      burst({ dur: 0.018, from: 5200, to: 2400, vol: 0.07 });
+      tone({ type: 'square', from: 1250 * r, to: 900 * r, dur: 0.035, vol: 0.045 });
+    },
+    // Tombol utama (Jalankan, Main, Mulai): "ba-ding" kayak ngambil koin.
+    confirm() {
+      burst({ dur: 0.02, from: 6000, to: 3000, vol: 0.06 });
+      tone({ type: 'triangle', from: 260, to: 130, dur: 0.07, vol: 0.2 });
+      tone({ type: 'square', from: 988, to: 988, dur: 0.07, vol: 0.07 });
+      tone({ type: 'square', from: 1319, to: 1319, start: 0.065, dur: 0.24, vol: 0.07 });
+    },
     // Klik tombol menu.
-    click() { tone({ type: 'square', from: 520, to: 780, dur: 0.07, vol: 0.07 }); },
+    // Tombol biasa: ketukan "pop" (badan rendah + percikan tinggi + klik tipis).
+    // Nadanya digeser dikit tiap kali biar ga membosankan.
+    click() {
+      const r = 0.96 + Math.random() * 0.08;
+      burst({ dur: 0.02, from: 6000, to: 3000, vol: 0.05 });
+      tone({ type: 'triangle', from: 320 * r, to: 150 * r, dur: 0.07, vol: 0.2 });
+      tone({ type: 'square', from: 880 * r, to: 1320 * r, dur: 0.05, vol: 0.055 });
+    },
     // Tirai transisi menyapu layar.
     whoosh() { burst({ dur: 0.5, from: 5000, to: 400, vol: 0.12 }); },
     // Langkah kaki hero.
@@ -498,4 +526,16 @@ const Sound = (() => {
 // di mana pun (menu, pengaturan, dst.) langsung nyalain musik.
 ['pointerup', 'keydown'].forEach((type) => {
   window.addEventListener(type, () => Sound.startMusic(), { once: true, passive: true });
+});
+
+// Semua tombol dapat suara. Pendengar ini jalan setelah pendengar tombolnya
+// sendiri, jadi kalau tombol itu udah bunyi (whoosh, kertas, halaman, dst.)
+// ga ditambah bunyi klik lagi.
+document.addEventListener('click', (event) => {
+  const target = event.target.closest && event.target.closest('button, a.btn, label.toggle');
+  if (!target || target.disabled) return;
+  if (Sound.sinceLast() < 90) return;
+  if (target.classList.contains('key')) Sound.key();
+  else if (target.matches('.btn:not(.ghost)')) Sound.confirm();
+  else Sound.click();
 });

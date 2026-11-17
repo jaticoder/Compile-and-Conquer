@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'compile-and-conquer-level';
+  const STORAGE_KEY = 'compile-and-conquer-level' + (Lang.current() === 'cpp' ? '' : `-${Lang.current()}`);
   const RUN_LABEL = 'Jalankan ▶';
 
   const $ = (id) => document.getElementById(id);
@@ -563,7 +563,7 @@
     }
 
     if (result.kind === 'compile') {
-      const info = ErrorHelp.explain(result.compileOutput, code);
+      const info = (Lang.current() === 'python' ? PyErrors : ErrorHelp).explain(result.compileOutput, code);
       showSyntaxError(info);
       CodeEditor.markError(info.line);
       await blockBoss();
@@ -591,7 +591,7 @@
       const got = normalizeOutput(result.stdout);
       const want = normalizeOutput(level.expected);
       let tip = '';
-      if (!got) tip = 'Programnya jalan, tapi ga menampilkan apa-apa. Pakai cout << ...; buat nampilin.\n\n';
+      if (!got) tip = 'Programnya jalan, tapi ga menampilkan apa-apa. ' + (Lang.current() === 'python' ? 'Pakai print(...) buat nampilin.' : 'Pakai cout << ...; buat nampilin.') + '\n\n';
       else if (got.toLowerCase() === want.toLowerCase()) tip = 'Isinya udah bener, tapi huruf besar-kecilnya beda.\n\n';
       else if (got.replace(/\s+/g, '') === want.replace(/\s+/g, '')) tip = 'Isinya udah bener, tapi spasi atau baris barunya beda.\n\n';
       showConsole(
@@ -632,7 +632,7 @@
     try {
       const level = LEVELS[levelIndex];
       const code = CodeEditor.getCode();
-      const result = await runCpp(code);
+      const result = await runCode(code);
       await evaluate(level, code, result);
     } catch (err) {
       showConsole('error', 'Ada yang salah', 'Terjadi error di game-nya. Coba refresh halaman.');

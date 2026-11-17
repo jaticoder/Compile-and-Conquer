@@ -19,11 +19,19 @@ const CodeEditor = (() => {
 
   // Tombol simbol cepat buat HP (susah nyari simbol di keyboard biasa).
   // Isi kedua bisa teks yang disisipkan, atau fungsi buat aksi khusus.
-  const QUICK_KEYS = [
+  const CPP_KEYS = [
     ['Tab', () => insertIndent()], ['{', '{'], ['}', '}'], ['(', '('], [')', ')'], [';', ';'],
     ['"', '"'], ['<<', ' << '], ['<', '<'], ['>', '>'], ['<=', ' <= '], ['>=', ' >= '],
     ['==', ' == '], ['++', '++'], ['#', '#'], ['*', '*'], ['=', ' = '], ['+', '+'], ['[', '['], [']', ']'],
   ];
+  const IS_PY = typeof Lang !== 'undefined' && Lang.current() === 'python';
+  const PY_KEYS = [
+    ['Tab', () => insertIndent()], [':', ':'], ['(', '('], [')', ')'], ['"', '"'],
+    ['==', ' == '], ['!=', ' != '], ['>=', ' >= '], ['<=', ' <= '], ['>', '>'], ['<', '<'],
+    ['=', ' = '], ['+', ' + '], ['-', ' - '], ['*', ' * '], ['/', ' / '], ['[', '['], [']', ']'], ['#', '#'],
+  ];
+  const QUICK_KEYS = IS_PY ? PY_KEYS : CPP_KEYS;
+
 
   let ta = null;      // textarea
   let mirror = null;  // lapisan cermin
@@ -538,7 +546,7 @@ const CodeEditor = (() => {
       const caret = start + 1 + indent.length + inner.length;
       ta.setSelectionRange(caret, caret);
     } else {
-      insert('\n' + indent + (prev === '{' && canDeepen ? INDENT : ''));
+      insert('\n' + indent + ((prev === '{' || (IS_PY && prev === ':')) && canDeepen ? INDENT : ''));
     }
     if (celebrate) lineDone(where, lineIdx);
   }
@@ -591,7 +599,7 @@ const CodeEditor = (() => {
           <pre class="ed-mirror" aria-hidden="true"><span class="ed-before"></span><span class="ed-caret" style="display:inline-block;width:0;height:1em"></span><span class="ed-ghost"></span><span class="ed-meas">MMMMMMMMMM</span></pre>
           <textarea class="ed-input" wrap="off" spellcheck="false" autocomplete="off"
             autocapitalize="off" autocorrect="off" enterkeyhint="enter"
-            aria-label="Editor kode C++"></textarea>
+            aria-label="Editor kode"></textarea>
          </div>
           <div class="ed-fx" aria-hidden="true"></div>
           <div class="ed-combo" aria-hidden="true"></div>

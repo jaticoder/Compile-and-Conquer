@@ -1609,3 +1609,21 @@ body.lesson-open { overflow: hidden; }
   background: #3a2412;
   box-shadow: 0 0 0 2px #6b3d18;
 }
+
+/* Pilihan bahasa di lobby */
+.lang-pick {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 0 0 26px;
+}
+.lang-pick .lang-btn { min-width: 120px; color: var(--paper); background: var(--night); }
+.lang-pick .lang-btn[aria-pressed="true"] {
+  color: var(--coin);
+  box-shadow:
+    0 -4px 0 0 var(--coin),
+    0 4px 0 0 var(--coin),
+    -4px 0 0 0 var(--coin),
+    4px 0 0 0 var(--coin);
+}
+.lobby.leaving .lang-pick { opacity: 0; transition: opacity 0.2s ease; }

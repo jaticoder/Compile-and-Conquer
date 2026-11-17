@@ -78,7 +78,7 @@ const LESSONS = {
     title: 'cout: bikin program ngomong',
     slides: [
       {
-        title: 'Taruh di dalam `main()`',
+        title: 'Taruh di dalam main()',
         text: ['Perintah kamu selalu ditulis di dalam `main()`, di atas `return 0;`. Empat baris lainnya itu kerangka dari Level 0. Ketuk tiap baris.'],
         code: skeletonCode([
           [ '    ', ['cout << "Halo Dunia";', 'Baris baru di level ini. Tampilin tulisan ke layar. Letaknya di dalam `main()`.', true] ],

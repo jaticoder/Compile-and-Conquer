@@ -3,10 +3,9 @@
 // Catatan:
 // - Server publik ini gratis tapi ada batas pemakaian. Kalau nanti rame,
 //   ganti JUDGE_URL ke server sendiri.
-// - 54 = C++ (GCC 9.2.0) di Judge0 CE.
+// - ID bahasa (C++ = 54, Python = 71) ada di lang.js.
 
 const JUDGE_URL = 'https://ce.judge0.com';
-const CPP_LANGUAGE_ID = 54;
 
 // Judge0 minta/ngasih teks dalam base64 (aman buat karakter spesial).
 function toBase64(text) {
@@ -29,7 +28,7 @@ function fromBase64(b64) {
 //   'runtime'  -> crash pas jalan, lihat `stderr`
 //   'timeout'  -> kelamaan (biasanya infinite loop)
 //   'network'  -> ga bisa nyambung ke server, lihat `message`
-async function runCpp(code) {
+async function runCode(code) {
   let response;
   try {
     response = await fetch(`${JUDGE_URL}/submissions?base64_encoded=true&wait=true`, {
@@ -37,7 +36,7 @@ async function runCpp(code) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         source_code: toBase64(code),
-        language_id: CPP_LANGUAGE_ID,
+        language_id: Lang.info().judgeId,
         stdin: '',
       }),
     });
@@ -63,12 +62,22 @@ async function runCpp(code) {
   else if (statusId === 6) kind = 'compile';
   else if (statusId === 5) kind = 'timeout';
 
+  const stderr = fromBase64(data.stderr);
+  let compileOutput = fromBase64(data.compile_output);
+  // Python ga punya tahap compile. SyntaxError dan error lain keluar sebagai
+  // Traceback di stderr, jadi diperlakukan kayak error compile biar dapat
+  // penjelasan ramah.
+  if (Lang.current() === 'python' && kind === 'runtime' && stderr.trim()) {
+    kind = 'compile';
+    compileOutput = stderr;
+  }
+
   return {
     kind,
     statusText: data.status ? data.status.description : '',
     stdout: fromBase64(data.stdout),
-    stderr: fromBase64(data.stderr),
-    compileOutput: fromBase64(data.compile_output),
+    stderr,
+    compileOutput,
   };
 }
 
