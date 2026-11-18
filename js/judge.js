@@ -29,6 +29,7 @@ function fromBase64(b64) {
 //   'timeout'  -> kelamaan (biasanya infinite loop)
 //   'network'  -> ga bisa nyambung ke server, lihat `message`
 async function runCode(code) {
+  if (Lang.current() === 'javascript') return runJavaScript(code);
   let response;
   try {
     response = await fetch(`${JUDGE_URL}/submissions?base64_encoded=true&wait=true`, {
@@ -79,6 +80,54 @@ async function runCode(code) {
     stderr,
     compileOutput,
   };
+}
+
+// JavaScript jalan langsung di browser lewat Web Worker (ga lewat Judge0).
+// - Preamble ditaruh di baris 1 tanpa enter, jadi nomor baris error = nomor baris di editor.
+// - console.log dikirim balik per baris. Worker dimatiin kalau lewat batas waktu
+//   (while (true) ga bikin tab nge-hang).
+// - Semua error (SyntaxError maupun runtime) dikembaliin sebagai kind 'compile'
+//   dengan format "NamaError: pesan" + "line N", dibaca JsErrors.explain().
+const JS_TIME_LIMIT = 3000;
+const JS_PREAMBLE = "const __fmt=(x)=>typeof x==='object'&&x!==null?JSON.stringify(x):String(x);"
+  + "console.log=console.info=console.warn=console.error=(...a)=>self.postMessage({out:a.map(__fmt).join(' ')});"
+  + "self.alert=self.prompt=self.fetch=self.XMLHttpRequest=self.WebSocket=undefined;";
+
+function runJavaScript(code) {
+  return new Promise((resolve) => {
+    if (typeof Worker === 'undefined') {
+      resolve({ kind: 'network', message: 'Browser ini ga mendukung Web Worker, jadi JavaScript belum bisa dijalankan.' });
+      return;
+    }
+    const source = `${JS_PREAMBLE}${code}\n;self.postMessage({done:true});`;
+    const url = URL.createObjectURL(new Blob([source], { type: 'text/javascript' }));
+    const worker = new Worker(url);
+    const out = [];
+    let finished = false;
+
+    const finish = (result) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      worker.terminate();
+      URL.revokeObjectURL(url);
+      resolve({ statusText: '', stderr: '', compileOutput: '', stdout: out.join('\n'), ...result });
+    };
+
+    const timer = setTimeout(() => finish({ kind: 'timeout' }), JS_TIME_LIMIT);
+    worker.onmessage = (event) => {
+      const data = event.data || {};
+      if (typeof data.out === 'string') out.push(data.out);
+      else if (data.done) finish({ kind: 'ok' });
+    };
+    worker.onerror = (event) => {
+      event.preventDefault();
+      const match = String(event.message || '').match(/^(?:Uncaught\s+)?(\w*Error):\s*(.*)$/);
+      const name = match ? match[1] : 'Error';
+      const text = match ? match[2] : String(event.message || '');
+      finish({ kind: 'compile', compileOutput: `${name}: ${text}\nline ${event.lineno || 0}`, stderr: text });
+    };
+  });
 }
 
 // Bandingin output: spasi/enter di ujung baris diabaikan.

@@ -7,10 +7,11 @@
 const LANGS = {
   cpp: { label: 'C++', judgeId: 54, start: '#include' },
   python: { label: 'Python', judgeId: 71, start: 'baris pertama' },
+  javascript: { label: 'JavaScript', judgeId: null, start: 'baris pertama' }, // jalan di browser, ga lewat Judge0
 };
 
 // Jumlah level tiap bahasa, dicatat sebelum LEVELS ditukar.
-const LANG_LEVEL_COUNT = { cpp: LEVELS.length, python: LEVELS_PY.length };
+const LANG_LEVEL_COUNT = { cpp: LEVELS.length, python: LEVELS_PY.length, javascript: LEVELS_JS.length };
 
 const Lang = (() => {
   const KEY = 'compile-and-conquer-lang';
@@ -29,6 +30,10 @@ const Lang = (() => {
     LEVELS.splice(0, LEVELS.length, ...LEVELS_PY);
     swap(LESSONS, LESSONS_PY);
     swap(LESSON_FOR_CONCEPT, LESSON_FOR_CONCEPT_PY);
+  } else if (cur === 'javascript') {
+    LEVELS.splice(0, LEVELS.length, ...LEVELS_JS);
+    swap(LESSONS, LESSONS_JS);
+    swap(LESSON_FOR_CONCEPT, LESSON_FOR_CONCEPT_JS);
   }
 
   // Key progress. C++ pakai key lama (tanpa akhiran) biar progress lama tetap kebaca.

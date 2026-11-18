@@ -593,7 +593,7 @@
     }
 
     if (result.kind === 'compile') {
-      const info = (Lang.current() === 'python' ? PyErrors : ErrorHelp).explain(result.compileOutput, code);
+      const info = ({ python: PyErrors, javascript: JsErrors }[Lang.current()] || ErrorHelp).explain(result.compileOutput, code);
       showSyntaxError(info);
       CodeEditor.markError(info.line);
       await blockBoss();
@@ -621,7 +621,7 @@
       const got = normalizeOutput(result.stdout);
       const want = normalizeOutput(level.expected);
       let tip = '';
-      if (!got) tip = 'Programnya jalan, tapi ga menampilkan apa-apa. ' + (Lang.current() === 'python' ? 'Pakai print(...) buat nampilin.' : 'Pakai cout << ...; buat nampilin.') + '\n\n';
+      if (!got) tip = 'Programnya jalan, tapi ga menampilkan apa-apa. ' + ({ python: 'Pakai print(...) buat nampilin.', javascript: 'Pakai console.log(...); buat nampilin.' }[Lang.current()] || 'Pakai cout << ...; buat nampilin.') + '\n\n';
       else if (got.toLowerCase() === want.toLowerCase()) tip = 'Isinya udah bener, tapi huruf besar-kecilnya beda.\n\n';
       else if (got.replace(/\s+/g, '') === want.replace(/\s+/g, '')) tip = 'Isinya udah bener, tapi spasi atau baris barunya beda.\n\n';
       showConsole(
@@ -671,7 +671,7 @@
     }
 
     // 3. C++: kurung kurawal buka lebih banyak dari tutup.
-    if (Lang.current() === 'cpp') {
+    if (Lang.current() !== 'python') {
       const open = (code.match(/\{/g) || []).length;
       const close = (code.match(/\}/g) || []).length;
       if (open > close) return 'Ada { yang belum ditutup }. Kodenya belum selesai.';
@@ -826,7 +826,7 @@
   const CHAPTERS = [
     { id: 'python', name: 'Python', blurb: 'Paling ringkas, ga ada kerangka panjang. Cocok buat yang belum pernah ngoding.', tag: 'Disarankan mulai di sini' },
     { id: 'cpp', name: 'C++', blurb: 'Dipakai di kuliah Informatika. Ada kerangka program yang dijelasin pelan-pelan.' },
-    { id: 'js', name: 'JavaScript', blurb: 'Bahasa buat bikin web. Bab ini belum jadi.', soon: true },
+    { id: 'javascript', name: 'JavaScript', blurb: 'Bahasa buat bikin web. Kodemu langsung jalan di browser, ga perlu nunggu server.' },
   ];
 
   function chapterMeta(prog) {
