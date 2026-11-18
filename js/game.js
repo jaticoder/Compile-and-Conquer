@@ -1114,6 +1114,7 @@
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !els.chapters.hidden) { closeChapters(); els.mapBtn.focus({ preventScroll: true }); }
       else if (event.key === 'Escape' && !els.stages.hidden) { closeStages(); els.playBtn.focus({ preventScroll: true }); }
+      else if (event.key === 'Escape' && !els.lobby.hidden && !els.lobbySettings.hidden) { Sound.click(); showSettings(false); }
     });
     els.settingsBtn.addEventListener('click', () => { Sound.click(); showSettings(true); });
     els.settingsBack.addEventListener('click', () => { Sound.click(); showSettings(false); });

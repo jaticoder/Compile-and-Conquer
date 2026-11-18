@@ -981,6 +981,11 @@ html:has(.lobby:not([hidden]), .chapters:not([hidden]), .stages:not([hidden])) {
   color: var(--paper);
 }
 
+/* Pengaturan kebuka: kasih napas antara judul dan kartu. */
+.lobby-inner:has(.lobby-settings:not([hidden])) .lobby-logo { margin-bottom: 44px; }
+/* Judul sedikit mengecil biar kartu pengaturan jadi pusat perhatian. */
+.lobby-inner:has(.lobby-settings:not([hidden])) .lobby-title { font-size: clamp(22px, min(5vw, 7vh), 44px); }
+
 .lobby-menu {
   display: flex;
   flex-direction: column;
@@ -1004,8 +1009,8 @@ html:has(.lobby:not([hidden]), .chapters:not([hidden]), .stages:not([hidden])) {
 .lobby .btn.ghost { background: var(--night); }
 
 .lobby-settings {
-  width: min(360px, 100%);
-  padding: 22px 22px 26px;
+  width: min(400px, 100%);
+  padding: 26px 28px 28px;
   text-align: center;
   background: var(--plank);
   --c: var(--plank-line);
@@ -1016,8 +1021,44 @@ html:has(.lobby:not([hidden]), .chapters:not([hidden]), .stages:not([hidden])) {
     4px 0 0 0 var(--c);
 }
 
+.lobby-settings { position: relative; }
+
+/* Tombol tutup (X): merah, ikon pixel art, nongol di pojok kartu kayak game lama. */
+.lobby-settings .settings-close.btn {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  min-width: 0;
+  padding: 0;
+  color: var(--paper);
+  background: #e8504a;
+  box-shadow:
+    0 -4px 0 0 #e8504a,
+    0 4px 0 0 #e8504a,
+    -4px 0 0 0 #e8504a,
+    4px 0 0 0 #e8504a,
+    0 8px 0 0 #8f2420,
+    -4px 4px 0 0 #8f2420,
+    4px 4px 0 0 #8f2420;
+}
+
+.lobby-settings .settings-close.btn:active {
+  box-shadow:
+    0 -4px 0 0 #e8504a,
+    0 4px 0 0 #e8504a,
+    -4px 0 0 0 #e8504a,
+    4px 0 0 0 #e8504a;
+}
+
+.lobby-settings .settings-close .px-x { display: block; image-rendering: pixelated; }
+
 .lobby-settings h2 {
-  margin: 0 0 20px;
+  margin: 0 0 22px;
   font-family: var(--display);
   font-weight: 400;
   font-size: 16px;
@@ -1161,7 +1202,8 @@ html:has(.lobby:not([hidden]), .chapters:not([hidden]), .stages:not([hidden])) {
   .lobby-tag { margin-top: 14px; }
   .lobby-menu { gap: 18px; }
   .lobby-settings { padding: 16px 20px 18px; }
-  .lobby-settings h2 { margin-bottom: 12px; }
+  .lobby-settings .settings-close.btn { top: -12px; right: -12px; }
+  .lobby-settings h2 { margin-bottom: 14px; }
   .setting-row { margin-bottom: 16px; }
   /* Pengaturan kebuka: judul disembunyiin biar kartunya dapat ruang. */
   .lobby-inner:has(.lobby-settings:not([hidden])) .lobby-logo { display: none; }
@@ -1279,6 +1321,7 @@ html:has(.lobby:not([hidden]), .chapters:not([hidden]), .stages:not([hidden])) {
 
 /* ---------- Pengaturan di lobby ---------- */
 .setting-block { margin-bottom: 26px; text-align: left; }
+.lobby-settings .setting-block:last-of-type { margin-bottom: 0; }
 .setting-block .setting-row { margin-bottom: 12px; }
 .setting-note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
 
