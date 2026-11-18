@@ -203,7 +203,7 @@
     els.hudLevel.textContent = `Level ${levelIndex + 1} dari ${LEVELS.length}`;
     els.coinCount.textContent = String(Lang.progress(Lang.current()).beaten);
     resetHp();
-    els.stage.className = `stage tier-${level.tier}`;
+    els.stage.className = `stage tier-${level.tier} lang-${Lang.current()} lv-${levelIndex + 1}`;
     Sound.setMood(level.tier);
 
     setSprite(els.hero, 'assets/hero/hero.png', '🧑‍💻', 'Hero');

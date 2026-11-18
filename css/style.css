@@ -136,6 +136,35 @@ body {
     #4d1208;
 }
 
+/* Latar per level untuk C++ dan JavaScript: satu gambar tiap level (cpp-1..10, js-1..10),
+   kelas lv-N dipasang renderLevel() di game.js. Python tetap pakai 3 latar per tier di atas.
+   Dibuat oleh tools/arena_px.py (160x60, grid sama dengan latar utama). */
+.stage.lang-cpp.lv-1 { background: url('../assets/backgrounds/cpp-1.png?v=4') center bottom / cover no-repeat, #869bbb; }
+.stage.lang-cpp.lv-2 { background: url('../assets/backgrounds/cpp-2.png?v=4') center bottom / cover no-repeat, #91a5bc; }
+.stage.lang-cpp.lv-3 { background: url('../assets/backgrounds/cpp-3.png?v=4') center bottom / cover no-repeat, #6a8fb2; }
+.stage.lang-cpp.lv-4 { background: url('../assets/backgrounds/cpp-4.png?v=4') center bottom / cover no-repeat, #733d5e; }
+.stage.lang-cpp.lv-5 { background: url('../assets/backgrounds/cpp-5.png?v=4') center bottom / cover no-repeat, #4a332d; }
+.stage.lang-cpp.lv-6 { background: url('../assets/backgrounds/cpp-6.png?v=4') center bottom / cover no-repeat, #3d4b65; }
+.stage.lang-cpp.lv-7 { background: url('../assets/backgrounds/cpp-7.png?v=4') center bottom / cover no-repeat, #1d284a; }
+.stage.lang-cpp.lv-8 { background: url('../assets/backgrounds/cpp-8.png?v=4') center bottom / cover no-repeat, #381811; }
+.stage.lang-cpp.lv-9 { background: url('../assets/backgrounds/cpp-9.png?v=4') center bottom / cover no-repeat, #2c2f4c; }
+.stage.lang-cpp.lv-10 { background: url('../assets/backgrounds/cpp-10.png?v=4') center bottom / cover no-repeat, #441018; }
+.stage.lang-javascript.lv-1 { background: url('../assets/backgrounds/js-1.png?v=4') center bottom / cover no-repeat, #884b7f; }
+.stage.lang-javascript.lv-2 { background: url('../assets/backgrounds/js-2.png?v=4') center bottom / cover no-repeat, #265571; }
+.stage.lang-javascript.lv-3 { background: url('../assets/backgrounds/js-3.png?v=4') center bottom / cover no-repeat, #804472; }
+.stage.lang-javascript.lv-4 { background: url('../assets/backgrounds/js-4.png?v=4') center bottom / cover no-repeat, #512c5f; }
+.stage.lang-javascript.lv-5 { background: url('../assets/backgrounds/js-5.png?v=4') center bottom / cover no-repeat, #366b8e; }
+.stage.lang-javascript.lv-6 { background: url('../assets/backgrounds/js-6.png?v=4') center bottom / cover no-repeat, #a29aa4; }
+.stage.lang-javascript.lv-7 { background: url('../assets/backgrounds/js-7.png?v=4') center bottom / cover no-repeat, #1c1634; }
+.stage.lang-javascript.lv-8 { background: url('../assets/backgrounds/js-8.png?v=4') center bottom / cover no-repeat, #2e264b; }
+.stage.lang-javascript.lv-9 { background: url('../assets/backgrounds/js-9.png?v=4') center bottom / cover no-repeat, #1c224f; }
+.stage.lang-javascript.lv-10 { background: url('../assets/backgrounds/js-10.png?v=4') center bottom / cover no-repeat, #462253; }
+
+/* Lobby C++ dan JavaScript punya latar sendiri (120x60, tinggi grid sama dengan latar utama; tengah sengaja
+   kosong buat judul dan tombol). Dibuat oleh tools/arena_px.py. Python tetap pakai latar basic bawaan. */
+body[data-lang="cpp"] .lobby { background: url('../assets/backgrounds/lobby-cpp.png?v=4') center bottom / cover no-repeat, #a9c6e8; }
+body[data-lang="javascript"] .lobby { background: url('../assets/backgrounds/lobby-js.png?v=4') center bottom / cover no-repeat, #6b2d7a; }
+
 /* Tanah bata di dasar scene. */
 .stage::after {
   content: '';

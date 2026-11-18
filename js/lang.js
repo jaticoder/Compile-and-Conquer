@@ -1,5 +1,5 @@
 // Pilihan bahasa: C++ atau Python. Disimpan di localStorage.
-// Dimuat sebelum game.js. Kalau Python dipilih, isi LEVELS dan LESSONS
+// Dimuat sebelum game.js (dan sesudah skins.js). Kalau Python dipilih, isi LEVELS dan LESSONS
 // ditukar dengan versi Python, jadi sisa kode game ga perlu tau bedanya.
 // Ganti bahasa = simpan pilihan lalu muat ulang halaman (paling aman).
 // Bahasa dipilih lewat peta bab (lihat game.js).
@@ -34,6 +34,11 @@ const Lang = (() => {
     LEVELS.splice(0, LEVELS.length, ...LEVELS_JS);
     swap(LESSONS, LESSONS_JS);
     swap(LESSON_FOR_CONCEPT, LESSON_FOR_CONCEPT_JS);
+    applySkin(LEVELS, SKIN_JS);
+    applyTextSkin(LEVELS, LESSONS, TEXT_JS);
+  } else {
+    applySkin(LEVELS, SKIN_CPP);
+    applyTextSkin(LEVELS, LESSONS, TEXT_CPP);
   }
 
   // Key progress. C++ pakai key lama (tanpa akhiran) biar progress lama tetap kebaca.
@@ -123,6 +128,7 @@ const Lang = (() => {
 (() => {
   const info = Lang.info();
   document.title = `Compile & Conquer: ${info.label}`;
+  document.body.dataset.lang = Lang.current(); // dipakai CSS buat latar per bahasa
   const note = document.querySelector('.quest .note');
   if (note) {
     note.textContent = '';
