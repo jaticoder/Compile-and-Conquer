@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=37">
+  <link rel="stylesheet" href="css/style.css?v=39">
 </head>
 <body data-view="menu">
 
@@ -113,7 +113,6 @@
 
       <nav class="lobby-menu" id="lobbyMenu" aria-label="Menu utama">
         <button class="btn" id="playBtn" type="button">Main</button>
-        <button class="btn ghost" id="mapBtn" type="button">Peta Bab</button>
         <button class="btn ghost" id="settingsBtn" type="button">Pengaturan</button>
         <a class="btn ghost" id="portfolioLink" href="https://jaticoder.github.io/Portofolio/">Kembali ke Portofolio</a>
       </nav>
@@ -159,7 +158,6 @@
       <p class="chapters-sub" id="stagesSub"></p>
       <div class="stage-grid" id="stageGrid"></div>
       <div class="stages-actions">
-        <button class="btn ghost" id="stagesSwap" type="button">Ganti bab</button>
         <button class="btn ghost" id="stagesBack" type="button">Kembali</button>
       </div>
     </div>
@@ -169,7 +167,10 @@
   <section class="chapters" id="chapters" hidden aria-labelledby="chaptersTitle">
     <div class="chapters-inner">
       <h2 id="chaptersTitle">Peta Bab</h2>
-      <p class="chapters-sub">Semua bab terbuka. Pilih bahasa yang mau kamu pelajari. Progress tiap bab disimpan terpisah.</p>
+      <div class="guide">
+        <div class="mentor guide-mentor" id="guideMentor" aria-hidden="true"></div>
+        <p class="guide-bubble" id="guideBubble"></p>
+      </div>
       <div class="chapter-grid" id="chapterGrid"></div>
       <button class="btn ghost" id="chaptersBack" type="button">Kembali</button>
     </div>
@@ -230,6 +231,6 @@
   <script src="js/errors.js?v=26"></script>
   <script src="js/judge.js?v=22"></script>
   <script src="js/editor.js?v=26"></script>
-  <script src="js/game.js?v=33"></script>
+  <script src="js/game.js?v=34"></script>
 </body>
 </html>

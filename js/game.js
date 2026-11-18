@@ -56,17 +56,17 @@
     settingsBack: $('settingsBack'),
     menuBtn: $('menuBtn'),
     lessonBtn: $('lessonBtn'),
-    mapBtn: $('mapBtn'),
     // peta bab
     chapters: $('chapters'),
     chapterGrid: $('chapterGrid'),
     chaptersBack: $('chaptersBack'),
+    guideMentor: $('guideMentor'),
+    guideBubble: $('guideBubble'),
     // pilih level
     stages: $('stages'),
     stageGrid: $('stageGrid'),
     stagesSub: $('stagesSub'),
     stagesBack: $('stagesBack'),
-    stagesSwap: $('stagesSwap'),
     // transisi
     wipe: $('wipe'),
     scrim: $('scrim'),
@@ -717,7 +717,7 @@
 
   // ---------- Lobby ----------
 
-  // Main selalu ngebuka pilihan level (kecuali pemain baru, lihat playBtn di init).
+  // Main selalu ngebuka peta bab dulu, baru pilih level.
   function paintPlay() {
     els.playBtn.textContent = 'Main';
   }
@@ -819,15 +819,36 @@
   }
 
   // ---------- Peta bab ----------
-  // Satu kartu per bahasa. Semua bab terbuka. Python diberi label "Disarankan"
-  // buat pemula, JavaScript "Segera hadir". Pilih bahasa lain = muat ulang
-  // halaman (lihat lang.js), lalu langsung masuk game.
+  // Alurnya: Main -> peta bab -> pilih level. Satu kartu per bahasa, semua bab terbuka.
+  // Urutan kartu: Python, JavaScript, C++ (JavaScript di tengah biar ga kelihatan
+  // lebih gampang dari C++). Tiap kartu: pemandangan bab (latar + hero + boss
+  // berikutnya), tingkat kesulitan, dan deretan boss yang jadi bar progress.
+  // Pilih bahasa lain = muat ulang halaman (lihat lang.js), lalu lanjut ke pilih level.
 
   const CHAPTERS = [
-    { id: 'python', name: 'Python', blurb: 'Paling ringkas, ga ada kerangka panjang. Cocok buat yang belum pernah ngoding.', tag: 'Disarankan mulai di sini' },
-    { id: 'cpp', name: 'C++', blurb: 'Dipakai di kuliah Informatika. Ada kerangka program yang dijelasin pelan-pelan.' },
-    { id: 'javascript', name: 'JavaScript', blurb: 'Bahasa buat bikin web. Kodemu langsung jalan di browser, ga perlu nunggu server.' },
+    {
+      id: 'python', name: 'Python', tag: 'Disarankan mulai di sini', diff: 1,
+      blurb: 'Paling ringkas, ga ada kerangka panjang. Cocok buat yang belum pernah ngoding.',
+      tip: 'Python itu paling ringkas. Satu baris aja udah jadi program. Cocok buat pemula!',
+      bg: 'assets/backgrounds/basic.svg',
+      bosses: () => LEVELS_PY.map((l) => l.boss),
+    },
+    {
+      id: 'javascript', name: 'JavaScript', diff: 2,
+      blurb: 'Bahasa buat bikin web. Kodemu langsung jalan di browser, ga perlu nunggu server.',
+      tip: 'JavaScript dipakai buat bikin web. Hasil kodemu langsung kelihatan di browser.',
+      bg: 'assets/backgrounds/js-1.png',
+      bosses: () => SKIN_JS.map((s) => s.boss),
+    },
+    {
+      id: 'cpp', name: 'C++', diff: 3,
+      blurb: 'Dipakai di kuliah Informatika. Ada kerangka program yang dijelasin pelan-pelan.',
+      tip: 'C++ dipakai di kuliah Informatika. Aturannya lebih ketat, tapi materinya jelasin pelan-pelan.',
+      bg: 'assets/backgrounds/cpp-1.png',
+      bosses: () => SKIN_CPP.map((s) => s.boss),
+    },
   ];
+  const DIFF_LABEL = ['', 'Santai', 'Sedang', 'Menantang'];
 
   function chapterMeta(prog) {
     if (prog.finished) return 'Tamat. Semua boss udah kalah.';
@@ -835,56 +856,127 @@
     return `Lanjut dari level ${prog.beaten + 1}`;
   }
 
+  // Kotak kecil berisi sprite. Kalau file ga ada, tampil emoji cadangan.
+  function chSprite(cls, src, emoji) {
+    const box = document.createElement('span');
+    box.className = cls;
+    setSprite(box, src, emoji, '');
+    return box;
+  }
+
+  // Mentor di atas kartu: teksnya diketik pelan-pelan, ganti tiap kartu disorot.
+  let guideTimer = 0;
+  let guideLock = false;
+  function sayGuide(text) {
+    const el = els.guideBubble;
+    if (el.dataset.full === text) return;
+    clearInterval(guideTimer);
+    el.dataset.full = text;
+    if (reduceMotion) { el.textContent = text; return; }
+    el.textContent = '';
+    els.guideMentor.classList.add('talking');
+    let n = 0;
+    guideTimer = setInterval(() => {
+      n += 1;
+      el.textContent = text.slice(0, n);
+      if (n >= text.length) {
+        clearInterval(guideTimer);
+        els.guideMentor.classList.remove('talking');
+      }
+    }, 16);
+  }
+
   function buildChapters() {
     els.chapterGrid.textContent = '';
     CHAPTERS.forEach((ch) => {
+      const prog = Lang.progress(ch.id);
+      const bosses = ch.bosses();
+      const next = bosses[Math.min(prog.beaten, bosses.length - 1)];
+      const meta = chapterMeta(prog);
+
       const card = document.createElement('button');
       card.type = 'button';
-      card.className = 'chapter' + (ch.tag ? ' pick' : '') + (ch.soon ? ' soon' : '');
+      card.className = 'chapter' + (ch.tag ? ' pick' : '') + (prog.finished ? ' finished' : '');
       card.dataset.lang = ch.id;
-      if (ch.soon) card.disabled = true;
+      card.setAttribute('aria-label', `${ch.name}. ${prog.beaten} dari ${prog.total} boss. ${meta}`);
 
+      // Pemandangan: latar bab, hero, dan boss yang bakal dilawan berikutnya.
+      const scene = document.createElement('span');
+      scene.className = 'ch-scene';
+      scene.setAttribute('aria-hidden', 'true');
+      scene.style.backgroundImage = `url("${ch.bg}")`;
+      const plate = document.createElement('span');
+      plate.className = 'ch-plate';
+      plate.textContent = next.name;
+      scene.append(chSprite('ch-hero', 'assets/hero/hero.png', '🧑‍💻'), chSprite('ch-boss', next.sprite, next.emoji), plate);
+      card.appendChild(scene);
+
+      const body = document.createElement('span');
+      body.className = 'ch-body';
+
+      const head = document.createElement('span');
+      head.className = 'ch-head';
       const name = document.createElement('span');
       name.className = 'ch-name';
       name.textContent = ch.name;
-      card.appendChild(name);
-
+      head.appendChild(name);
       if (ch.tag) {
         const tag = document.createElement('span');
         tag.className = 'ch-tag';
         tag.textContent = ch.tag;
-        card.appendChild(tag);
+        head.appendChild(tag);
       }
+      if (Lang.chosen() && Lang.current() === ch.id) {
+        const now = document.createElement('span');
+        now.className = 'ch-now';
+        now.textContent = 'Bab kamu sekarang';
+        head.appendChild(now);
+      }
+      body.appendChild(head);
 
       const blurb = document.createElement('span');
       blurb.className = 'ch-blurb';
       blurb.textContent = ch.blurb;
-      card.appendChild(blurb);
+      body.appendChild(blurb);
+
+      const diff = document.createElement('span');
+      diff.className = 'ch-diff';
+      const pips = document.createElement('span');
+      pips.className = 'ch-pips';
+      pips.setAttribute('aria-hidden', 'true');
+      for (let i = 1; i <= 3; i++) {
+        const pip = document.createElement('i');
+        if (i <= ch.diff) pip.className = 'on';
+        pips.appendChild(pip);
+      }
+      diff.append('Tingkat: ', pips, ` ${DIFF_LABEL[ch.diff]}`);
+      body.appendChild(diff);
+
+      // Deretan boss = bar progress. Berwarna = udah kalah, emas = berikutnya, siluet = belum.
+      const roster = document.createElement('span');
+      roster.className = 'ch-roster';
+      roster.setAttribute('aria-hidden', 'true');
+      bosses.forEach((boss, i) => {
+        const state = i < prog.beaten ? 'done' : i === prog.beaten && !prog.finished ? 'now' : 'todo';
+        roster.appendChild(chSprite(`rb ${state}`, boss.sprite, boss.emoji));
+      });
+      body.appendChild(roster);
 
       const foot = document.createElement('span');
       foot.className = 'ch-foot';
-      if (ch.soon) {
-        foot.textContent = 'Segera hadir';
-      } else {
-        const prog = Lang.progress(ch.id);
-        const bar = document.createElement('span');
-        bar.className = 'ch-bar' + (prog.finished ? ' full' : '');
-        bar.setAttribute('aria-hidden', 'true');
-        for (let i = 0; i < prog.total; i++) {
-          const seg = document.createElement('i');
-          if (i < prog.beaten) seg.className = 'on';
-          bar.appendChild(seg);
-        }
-        const count = document.createElement('span');
-        count.className = 'ch-count';
-        count.textContent = `${prog.beaten} dari ${prog.total} boss`;
-        const meta = document.createElement('span');
-        meta.className = 'ch-meta';
-        meta.textContent = chapterMeta(prog);
-        foot.append(bar, count, meta);
-        card.addEventListener('click', () => pickChapter(ch.id));
-      }
-      card.appendChild(foot);
+      const count = document.createElement('span');
+      count.className = 'ch-count';
+      count.textContent = `${prog.beaten} dari ${prog.total} boss`;
+      const metaEl = document.createElement('span');
+      metaEl.className = 'ch-meta';
+      metaEl.textContent = meta;
+      foot.append(count, metaEl);
+      body.appendChild(foot);
+      card.appendChild(body);
+
+      card.addEventListener('mouseenter', () => { if (!els.chapters.hidden) Sound.step(); sayGuide(ch.tip); });
+      card.addEventListener('focus', () => { if (!guideLock) sayGuide(ch.tip); });
+      card.addEventListener('click', () => pickChapter(ch.id, card));
       els.chapterGrid.appendChild(card);
     });
   }
@@ -895,18 +987,39 @@
     buildChapters();
     els.chapters.hidden = false;
     anim(els.chapters, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
-    anim(els.chapterGrid, [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 60, easing: 'ease-out', fill: 'backwards' });
-    const first = els.chapterGrid.querySelector('.chapter:not(:disabled)');
-    if (first) first.focus({ preventScroll: true });
+    Array.from(els.chapterGrid.children).forEach((card, i) => {
+      anim(card, [{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }], { duration: 340, delay: 80 + i * 90, easing: 'ease-out', fill: 'backwards' });
+    });
+    const cards = Array.from(els.chapterGrid.querySelectorAll('.chapter'));
+    const target = (Lang.chosen() && cards.find((c) => c.dataset.lang === Lang.current())) || cards[0];
+    guideLock = true;
+    if (target) target.focus({ preventScroll: true });
+    guideLock = false;
+    els.guideBubble.dataset.full = '';
+    sayGuide(Lang.chosen()
+      ? 'Mau lanjut di bab yang sama atau pindah? Semua bab terbuka.'
+      : 'Pilih bab dulu. Belum tau mulai dari mana? Python paling santai.');
   }
 
   function closeChapters() {
+    clearInterval(guideTimer);
+    els.guideMentor.classList.remove('talking');
     els.chapters.hidden = true;
   }
 
-  function pickChapter(id) {
+  // Kartu diketuk: hero nyerang boss sebentar, baru lanjut.
+  let picking = false;
+  async function pickChapter(id, card) {
+    if (picking) return;
+    picking = true;
+    Sound.confirm();
+    if (card && !reduceMotion) {
+      card.classList.add('go');
+      await wait(380);
+    }
+    picking = false;
     if (id !== Lang.current()) {
-      Lang.set(id, true); // muat ulang, lalu langsung masuk game
+      Lang.set(id, true); // muat ulang, lalu lanjut ke pilih level
       return;
     }
     closeChapters();
@@ -1101,19 +1214,14 @@
     // Lobby
     setSprite(els.lobbyHero, 'assets/hero/hero.png', '🧑‍💻', 'Hero');
     setSprite(els.lobbyBoss, LEVELS[0].boss.sprite, LEVELS[0].boss.emoji, LEVELS[0].boss.name);
-    // Main buka pilihan level. Pemain baru (belum milih bab dan belum ada progress) lewat peta bab dulu.
-    els.playBtn.addEventListener('click', () => {
-      const fresh = !inGame && !Lang.chosen() && Lang.progress(Lang.current()).beaten === 0;
-      if (fresh) openChapters();
-      else openStagesOrStart();
-    });
-    els.stagesBack.addEventListener('click', () => { Sound.click(); closeStages(); els.playBtn.focus({ preventScroll: true }); });
-    els.stagesSwap.addEventListener('click', () => { Sound.click(); closeStages(); openChapters(); });
-    els.mapBtn.addEventListener('click', () => { Sound.click(); openChapters(); });
-    els.chaptersBack.addEventListener('click', () => { Sound.click(); closeChapters(); els.mapBtn.focus({ preventScroll: true }); });
+    // Main buka peta bab dulu, baru pilih level.
+    els.playBtn.addEventListener('click', () => { Sound.click(); openChapters(); });
+    els.stagesBack.addEventListener('click', () => { Sound.click(); openChapters(); });
+    els.chaptersBack.addEventListener('click', () => { Sound.click(); closeChapters(); els.playBtn.focus({ preventScroll: true }); });
+    setSprite(els.guideMentor, 'assets/mentor/mentor.png', '🧙', '');
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && !els.chapters.hidden) { closeChapters(); els.mapBtn.focus({ preventScroll: true }); }
-      else if (event.key === 'Escape' && !els.stages.hidden) { closeStages(); els.playBtn.focus({ preventScroll: true }); }
+      if (event.key === 'Escape' && !els.chapters.hidden) { closeChapters(); els.playBtn.focus({ preventScroll: true }); }
+      else if (event.key === 'Escape' && !els.stages.hidden) { openChapters(); }
       else if (event.key === 'Escape' && !els.lobby.hidden && !els.lobbySettings.hidden) { Sound.click(); showSettings(false); }
     });
     els.settingsBtn.addEventListener('click', () => { Sound.click(); showSettings(true); });
