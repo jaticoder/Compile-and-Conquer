@@ -720,10 +720,12 @@ body {
   display: grid;
   place-items: center;
   padding: 16px;
+  overflow-y: auto;
   background: rgba(10, 8, 20, 0.8);
 }
 
 .modal-card {
+  margin: auto; /* tetap di tengah, tapi bisa digulung kalau layar pendek */
   width: min(420px, 100%);
   padding: 28px 24px 30px;
   text-align: center;
@@ -895,9 +897,6 @@ body.lock { overflow: hidden; }
   position: fixed;
   inset: 0;
   z-index: 20;
-  display: grid;
-  place-items: center;
-  padding: 24px 20px calc(max(14%, 36px) + 28px);
   overflow: hidden;
   background:
     url('../assets/backgrounds/basic.png') center bottom / cover no-repeat,
@@ -923,13 +922,26 @@ body.lock { overflow: hidden; }
 .lobby .sprite.boss { right: 9%; width: clamp(120px, 19vw, 280px); }
 
 .lobby-inner {
-  position: relative;
+  /* Pembungkus selebar layar yang digulung pakai scrollbar bawaan browser.
+     Background, sprite, dan tanah bata tetap diam di belakangnya. */
+  position: absolute;
+  inset: 0;
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 24px 20px calc(max(14%, 36px) + 28px);
 }
+
+/* Dua pegas kosong buat nengahin isi. Kalau isinya lebih tinggi dari layar,
+   pegasnya mengerut jadi 0 dan isinya bisa digulung dari atas sampai bawah. */
+.lobby-inner::before,
+.lobby-inner::after { content: ''; flex: 1 0 0; }
+
+/* Overlay layar penuh: scrollbar halaman di belakangnya dimatiin, biar cuma ada satu. */
+html:has(.lobby:not([hidden]), .chapters:not([hidden]), .stages:not([hidden])) { overflow: hidden; }
 
 .lobby-logo,
 .lobby-menu,
@@ -1132,7 +1144,7 @@ body.lock { overflow: hidden; }
   .topbar { padding: 18px 16px 16px; gap: 10px 12px; }
   .menu-btn { min-height: 36px; padding: 4px 10px 6px; font-size: 9px; }
 
-  .lobby { padding: 20px 16px calc(max(14%, 36px) + 96px); }
+  .lobby-inner { padding: 20px 16px calc(max(14%, 36px) + 96px); }
   .lobby-logo { margin-bottom: 28px; }
   .lobby-menu { gap: 22px; width: min(280px, 100%); }
   .lobby-menu .btn { padding: 12px 8px 14px; font-size: 11px; }
@@ -1141,8 +1153,22 @@ body.lock { overflow: hidden; }
   .lobby .sprite.boss { right: 6%; width: 96px; }
 }
 
+/* Layar pendek tapi masih cukup buat sprite: rapatkan jarak, judul ikut mengecil. */
+@media (max-height: 760px) {
+  .lobby-inner { padding-top: 10px; padding-bottom: calc(max(14%, 36px) + 8px); }
+  .lobby-title { font-size: clamp(22px, min(6.2vw, 8vh), 54px); }
+  .lobby-logo { margin-bottom: 22px; }
+  .lobby-tag { margin-top: 14px; }
+  .lobby-menu { gap: 18px; }
+  .lobby-settings { padding: 16px 20px 18px; }
+  .lobby-settings h2 { margin-bottom: 12px; }
+  .setting-row { margin-bottom: 16px; }
+  /* Pengaturan kebuka: judul disembunyiin biar kartunya dapat ruang. */
+  .lobby-inner:has(.lobby-settings:not([hidden])) .lobby-logo { display: none; }
+}
+
 @media (max-height: 560px) {
-  .lobby { padding-bottom: calc(max(14%, 36px) + 16px); }
+  .lobby-inner { padding-bottom: calc(max(14%, 36px) + 16px); }
   .lobby .sprite { display: none; }
   .lobby-logo { margin-bottom: 18px; }
   .lobby-tag { margin-top: 12px; }
