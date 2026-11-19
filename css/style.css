@@ -1881,7 +1881,7 @@ body.lesson-open { overflow: hidden; }
 .ch-hero,
 .ch-boss {
   position: absolute;
-  bottom: 9%;
+  bottom: calc(14% + 2px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -2175,3 +2175,50 @@ body.lesson-open { overflow: hidden; }
   .guide-bubble { font-size: 22px; }
   .ch-blurb { font-size: 21px; }
 }
+
+
+/* Tanah bata di dasar pemandangan kartu, sama kayak arena (biar hero dan boss ga ngambang). */
+.ch-scene::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 14%;
+  background: url('../assets/ui/brick.svg') 0 0 / 16px 16px;
+  image-rendering: pixelated;
+  border-top: 3px solid #2a1208;
+  z-index: 1;
+}
+.ch-hero,
+.ch-boss { z-index: 2; }
+.ch-plate { z-index: 3; }
+
+
+/* Warna bata per bab: Python tetap oranye (brick.svg), JavaScript teal (brick-js), C++ baja (brick-cpp).
+   Tiap bab bisa pakai .png atau .svg: kalau .png ada, itu yang tampil, kalau ga ada dipakai .svg.
+   Dipakai bingkai arena, tanah arena, tanah lobby, dan tanah di kartu peta bab. */
+body[data-lang="javascript"] .frame,
+body[data-lang="javascript"] .stage::after,
+body[data-lang="javascript"] .lobby::after,
+.chapter[data-lang="javascript"] .ch-scene::before {
+  background-image: url('../assets/ui/brick-js.svg?v=2'), url('../assets/ui/brick-js.svg?v=2');
+}
+
+body[data-lang="cpp"] .frame,
+body[data-lang="cpp"] .stage::after,
+body[data-lang="cpp"] .lobby::after,
+.chapter[data-lang="cpp"] .ch-scene::before {
+  background-image: url('../assets/ui/brick-cpp.svg?v=2'), url('../assets/ui/brick-cpp.svg?v=2');
+}
+
+
+/* Latar Python per level (py-1..10, dibuat tools/py_arena_px.py). Menimpa 3 latar per tier di atas. */
+.stage.lang-python.lv-1 { background: url('../assets/backgrounds/py-1.png?v=2') center bottom / cover no-repeat, #d3eefa; }
+.stage.lang-python.lv-2 { background: url('../assets/backgrounds/py-2.png?v=2') center bottom / cover no-repeat, #c5ebf3; }
+.stage.lang-python.lv-3 { background: url('../assets/backgrounds/py-3.png?v=2') center bottom / cover no-repeat, #d98470; }
+.stage.lang-python.lv-4 { background: url('../assets/backgrounds/py-4.png?v=2') center bottom / cover no-repeat, #a8658f; }
+.stage.lang-python.lv-5 { background: url('../assets/backgrounds/py-5.png?v=2') center bottom / cover no-repeat, #3a6358; }
+.stage.lang-python.lv-6 { background: url('../assets/backgrounds/py-6.png?v=2') center bottom / cover no-repeat, #c4a0a0; }
+.stage.lang-python.lv-7 { background: url('../assets/backgrounds/py-7.png?v=2') center bottom / cover no-repeat, #1b4640; }
+.stage.lang-python.lv-8 { background: url('../assets/backgrounds/py-8.png?v=2') center bottom / cover no-repeat, #f08a3a; }
+.stage.lang-python.lv-9 { background: url('../assets/backgrounds/py-9.png?v=2') center bottom / cover no-repeat, #262f66; }
+.stage.lang-python.lv-10 { background: url('../assets/backgrounds/py-10.png?v=2') center bottom / cover no-repeat, #3d1208; }

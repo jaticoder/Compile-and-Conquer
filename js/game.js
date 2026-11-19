@@ -830,21 +830,21 @@
       id: 'python', name: 'Python', tag: 'Disarankan mulai di sini', diff: 1,
       blurb: 'Paling ringkas, ga ada kerangka panjang. Cocok buat yang belum pernah ngoding.',
       tip: 'Python itu paling ringkas. Satu baris aja udah jadi program. Cocok buat pemula!',
-      bg: 'assets/backgrounds/basic.svg',
+      bg: (i) => `assets/backgrounds/py-${i + 1}.png?v=2`,
       bosses: () => LEVELS_PY.map((l) => l.boss),
     },
     {
       id: 'javascript', name: 'JavaScript', diff: 2,
       blurb: 'Bahasa buat bikin web. Kodemu langsung jalan di browser, ga perlu nunggu server.',
       tip: 'JavaScript dipakai buat bikin web. Hasil kodemu langsung kelihatan di browser.',
-      bg: 'assets/backgrounds/js-1.png',
+      bg: (i) => `assets/backgrounds/js-${i + 1}.png?v=4`,
       bosses: () => SKIN_JS.map((s) => s.boss),
     },
     {
       id: 'cpp', name: 'C++', diff: 3,
       blurb: 'Dipakai di kuliah Informatika. Ada kerangka program yang dijelasin pelan-pelan.',
       tip: 'C++ dipakai di kuliah Informatika. Aturannya lebih ketat, tapi materinya jelasin pelan-pelan.',
-      bg: 'assets/backgrounds/cpp-1.png',
+      bg: (i) => `assets/backgrounds/cpp-${i + 1}.png?v=4`,
       bosses: () => SKIN_CPP.map((s) => s.boss),
     },
   ];
@@ -891,7 +891,8 @@
     CHAPTERS.forEach((ch) => {
       const prog = Lang.progress(ch.id);
       const bosses = ch.bosses();
-      const next = bosses[Math.min(prog.beaten, bosses.length - 1)];
+      const nextIdx = Math.min(prog.beaten, bosses.length - 1);
+      const next = bosses[nextIdx];
       const meta = chapterMeta(prog);
 
       const card = document.createElement('button');
@@ -904,7 +905,7 @@
       const scene = document.createElement('span');
       scene.className = 'ch-scene';
       scene.setAttribute('aria-hidden', 'true');
-      scene.style.backgroundImage = `url("${ch.bg}")`;
+      scene.style.backgroundImage = `url("${ch.bg(nextIdx)}")`; // latar level boss yang ditampilin
       const plate = document.createElement('span');
       plate.className = 'ch-plate';
       plate.textContent = next.name;
