@@ -2242,3 +2242,14 @@ body[data-lang="cpp"] .lobby::after,
 .chapter[data-lang="cpp"] { --c: #6f86a6; }
 .chapter[data-lang]:hover,
 .chapter[data-lang]:focus-visible { --c: var(--coin); }
+
+/* Judul lobby di HP dibikin lebih besar. Lebarnya dibatasi "& Conquer" (9 huruf, satu huruf = 1em)
+   supaya ga lebih lebar dari tombol menu. Ditaruh paling akhir biar menang dari aturan layar pendek. */
+@media (max-width: 640px) {
+  .lobby-title { font-size: clamp(26px, min(8.6vw, 5.6vh), 40px); }
+}
+
+/* HP yang sangat pendek (misal 320x568): judul tetap kecil biar tombol ga nabrak sprite. */
+@media (max-width: 640px) and (max-height: 600px) {
+  .lobby-title { font-size: clamp(22px, 6.2vw, 26px); }
+}
