@@ -2222,3 +2222,23 @@ body[data-lang="cpp"] .lobby::after,
 .stage.lang-python.lv-8 { background: url('../assets/backgrounds/py-8.png?v=2') center bottom / cover no-repeat, #f08a3a; }
 .stage.lang-python.lv-9 { background: url('../assets/backgrounds/py-9.png?v=2') center bottom / cover no-repeat, #262f66; }
 .stage.lang-python.lv-10 { background: url('../assets/backgrounds/py-10.png?v=2') center bottom / cover no-repeat, #3d1208; }
+
+/* Judul lobby di HP: garis tepinya 4px lebih tebal dari satu "piksel" huruf (huruf 26px =
+   piksel 3px), jadi bayangannya menyelip ke lubang huruf dan tepinya kelihatan rusak.
+   Di layar kecil tepinya dikecilin jadi 2px (lebih kecil dari satu piksel huruf). */
+@media (max-width: 640px) {
+  .lobby-title {
+    text-shadow:
+      2px 0 0 #2a1208, -2px 0 0 #2a1208, 0 2px 0 #2a1208, 0 -2px 0 #2a1208,
+      2px 2px 0 #2a1208, -2px 2px 0 #2a1208, 2px -2px 0 #2a1208, -2px -2px 0 #2a1208,
+      0 5px 0 #2a1208;
+  }
+}
+
+/* Warna tepi kartu per bab, senada dengan bata tiap bab (Python oranye, JavaScript teal, C++ baja).
+   Sebelumnya cuma kartu Python (yang diberi label "Disarankan") yang berwarna. */
+.chapter[data-lang="python"] { --c: #c2571f; }
+.chapter[data-lang="javascript"] { --c: #1f9a9a; }
+.chapter[data-lang="cpp"] { --c: #6f86a6; }
+.chapter[data-lang]:hover,
+.chapter[data-lang]:focus-visible { --c: var(--coin); }

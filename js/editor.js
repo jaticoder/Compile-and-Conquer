@@ -247,6 +247,26 @@ const CodeEditor = (() => {
     stack.style.transform = px ? `translateX(${-px}px)` : '';
   }
 
+  // Sisa ruang kosong yang dijaga di kanan ghost, biar ga mepet atau kepotong tepi kotak
+  // (tepi kotak di HP bisa meleset beberapa piksel karena pembulatan layar dan font).
+  const EDGE = 20;
+
+  // Tepi kanan ghost yang SEBENARNYA (diukur dari yang tergambar, bukan dihitung dari
+  // lebar huruf), dalam piksel dari tepi kiri kotak editor, tanpa geseran lapisan.
+  // Hitungan lebar huruf sering meleset di HP (font telat termuat, zoom teks Android),
+  // dan itu yang bikin ghost sampai keluar layar.
+  function ghostRight() {
+    const range = document.createRange();
+    range.selectNodeContents(ghost);
+    let right = -Infinity;
+    for (const rect of range.getClientRects()) {
+      if (rect.width > 0) right = Math.max(right, rect.right);
+    }
+    if (right === -Infinity) return 0;
+    const matrix = new DOMMatrixReadOnly(getComputedStyle(stack).transform);
+    return right - matrix.m41 - stack.parentElement.getBoundingClientRect().left;
+  }
+
   // Tampilkan panduan di kursor. Urutan usaha, dari yang paling rapi:
   //   1. Muat inline: tampil apa adanya.
   //   2. Kurang sedikit: lapisan teks digeser ke kiri (selama kursor tetap kelihatan).
@@ -259,26 +279,29 @@ const CodeEditor = (() => {
   function placeHint(upToCaret, full, rest, onNewLine, stripRest, canWrap) {
     paintMirror(upToCaret, onNewLine ? '\n' + full : rest);
     const w = charWidth();
-    const room = ta.clientWidth - 6;
+    const room = ta.clientWidth - EDGE;
     let fits;
     let dx = 0;
     let wrapWidth = 0;
+    // Berapa piksel ghost melewati batas aman (diukur dari hasil gambar yang asli).
+    const need = ghostRight() - room;
 
     if (onNewLine) {
-      fits = ta.scrollLeft === 0 && full.length * w + 4 <= room;
+      fits = ta.scrollLeft === 0 && need <= 0;
     } else {
       const caretX = caretMark.offsetLeft - ta.scrollLeft;
-      const overflow = caretX + rest.length * w - room;
-      if (overflow <= 0) {
+      if (need <= 0) {
         fits = true;
-      } else if (caretX - 14 >= overflow) { // kursor tetap kelihatan setelah digeser
+      } else if (caretX - 14 >= need) { // kursor tetap kelihatan setelah digeser
         fits = true;
-        dx = overflow;
+        dx = need;
       } else if (canWrap) {
         // Geser secukupnya biar ada ruang minimal ~16 kolom, sisanya dipatahkan.
         fits = true;
         dx = Math.max(0, Math.min(caretX - 14, caretX + Math.min(rest.length, 16) * w - room));
         wrapWidth = room - (caretX - dx);
+        // Ruang terlalu sempit buat dipatahkan: pakai strip "Lanjutan" aja.
+        if (wrapWidth < w * 6) fits = false;
       } else {
         fits = false;
       }
@@ -290,6 +313,14 @@ const CodeEditor = (() => {
         ghost.classList.add('wrap');
         ghost.style.width = wrapWidth + 'px';
         ghostRows = Math.max(1, Math.round(ghost.offsetHeight / lineHeight()));
+      }
+      // Cek terakhir: kalau hasil gambarnya tetap melewati batas, jangan dipaksa.
+      if (!onNewLine && ghostRight() - dx > ta.clientWidth - EDGE + 1) {
+        setShift(0);
+        paintMirror(upToCaret, '');
+        showHint(full, stripRest);
+        syncScroll();
+        return true;
       }
       hideHint();
       syncScroll();
@@ -685,6 +716,10 @@ const CodeEditor = (() => {
     dedenting = false;
   }
 
+  // Ketukan = jari geser kurang dari ini (piksel) dan ditahan kurang dari ini (ms).
+  const TAP_SLOP = 8;
+  const TAP_MAX_MS = 700;
+
   function buildKeys(keysEl) {
     if (!keysEl) return;
     QUICK_KEYS.forEach(([label, action]) => {
@@ -694,8 +729,31 @@ const CodeEditor = (() => {
       btn.className = 'key';
       btn.textContent = label;
       btn.setAttribute('aria-label', `Sisipkan ${label}`);
-      // pointerdown + preventDefault: fokus (dan keyboard HP) tetap di editor.
+      // Fokus (dan keyboard HP) harus tetap di editor, jadi mousedown dicegah.
+      btn.addEventListener('mousedown', (event) => event.preventDefault());
+      // Mouse: langsung sisip waktu ditekan (ga ada geser).
+      // Sentuhan: baru sisip waktu jari DIANGKAT, dan cuma kalau itu ketukan. Kalau jari
+      // bergeser (lagi nggulung deretan simbol) atau browser mulai nggulung (pointercancel),
+      // simbolnya ga disisipkan. Dulu simbol di titik sentuh awal ikut kepencet.
+      let touch = null;
       btn.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse') {
+          event.preventDefault();
+          run();
+          return;
+        }
+        touch = { x: event.clientX, y: event.clientY, t: Date.now() };
+      });
+      btn.addEventListener('pointermove', (event) => {
+        if (touch && Math.hypot(event.clientX - touch.x, event.clientY - touch.y) > TAP_SLOP) touch = null;
+      });
+      btn.addEventListener('pointercancel', () => { touch = null; });
+      btn.addEventListener('pointerleave', () => { touch = null; });
+      btn.addEventListener('pointerup', (event) => {
+        if (!touch) return;
+        const isTap = Date.now() - touch.t < TAP_MAX_MS;
+        touch = null;
+        if (!isTap) return;
         event.preventDefault();
         run();
       });
@@ -748,6 +806,12 @@ const CodeEditor = (() => {
     ta.addEventListener('input', typingFx); // setelah onChange: posisi kursor udah terbaru
     ta.addEventListener('scroll', () => { syncScroll(); refreshGhost(); });
     ta.addEventListener('keyup', refreshGhost);
+    // Ukuran huruf dan lebar kotak bisa berubah belakangan (font selesai dimuat, HP diputar,
+    // keyboard muncul): hitung ulang posisi ghost supaya ga kepotong.
+    const relayout = () => { if (ta) { revealCaret(); refreshGhost(); } };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+    window.addEventListener('resize', relayout);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', relayout);
     ta.addEventListener('click', refreshGhost);
     ta.addEventListener('focus', refreshGhost);
     document.addEventListener('selectionchange', () => {
