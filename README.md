@@ -239,3 +239,4 @@ JavaScript: jalan langsung di browser lewat Web Worker (`runJavaScript()` di `ju
 - [x] Ghost baris berikutnya sejajar sama posisi setelah Enter
 - [x] Lobby bisa digulung di zoom browser tinggi, Pengaturan ditutup lewat tombol X atau Esc
 - [ ] Self-host Judge0 kalau pemainnya banyak
+a
